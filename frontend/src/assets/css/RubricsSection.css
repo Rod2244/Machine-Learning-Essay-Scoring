@@ -1,8 +1,14 @@
-/* Rubrics Section Styles - AcadScore Design System */
+/* Rubrics Section Styles - Enhanced */
 .page-content {
   height: 100%;
   display: flex;
   flex-direction: column;
+  animation: fadeSlideIn 0.3s ease;
+}
+
+@keyframes fadeSlideIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .page-header {
@@ -41,7 +47,7 @@
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.25s ease;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -51,75 +57,92 @@
 .edit-btn:hover {
   background-color: var(--secondary-brown);
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(80, 59, 47, 0.25);
+  box-shadow: 0 6px 16px rgba(80, 59, 47, 0.25);
 }
 
-/* Rubrics Page Styles */
+.edit-btn:active { transform: translateY(0); }
+
+/* Rubrics Grid */
 .rubrics-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 30px;
-  margin-bottom: 40px;
+  gap: 24px;
+  margin-bottom: 32px;
 }
 
 .rubric-item {
   background-color: #FFFFFF;
   border-radius: 16px;
-  padding: 30px;
-  box-shadow: 0 4px 16px rgba(80, 59, 47, 0.1);
+  padding: 28px;
+  box-shadow: 0 4px 16px rgba(80, 59, 47, 0.08);
   transition: all 0.3s ease;
   border: 1px solid rgba(126, 100, 81, 0.1);
   text-align: center;
+  cursor: default;
 }
 
 .rubric-item:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 24px rgba(80, 59, 47, 0.15);
+  transform: translateY(-5px);
+  box-shadow: 0 12px 28px rgba(80, 59, 47, 0.15);
+  border-color: rgba(217, 142, 139, 0.35);
 }
 
 .rubric-icon {
-  font-size: 3rem;
-  margin-bottom: 20px;
+  font-size: 2.8rem;
+  margin-bottom: 16px;
   display: block;
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.rubric-item:hover .rubric-icon {
+  transform: scale(1.15) rotate(-3deg);
 }
 
 .rubric-item h3 {
-  font-size: 1.3rem;
+  font-size: 1.2rem;
   font-weight: 600;
   color: var(--primary-cocoa);
-  margin-bottom: 12px;
+  margin-bottom: 10px;
   font-family: var(--font-title);
 }
 
 .rubric-item p {
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   line-height: 1.5;
   color: var(--secondary-brown);
   font-family: var(--font-body);
   margin: 0;
 }
 
+/* Create Rubric Section */
 .create-rubric-section {
-  background-color: var(--accent-blush);
+  background: linear-gradient(135deg, var(--accent-blush) 0%, rgba(236, 199, 192, 0.5) 100%);
   border-radius: 16px;
-  padding: 40px;
+  padding: 36px;
   text-align: center;
   box-shadow: 0 4px 16px rgba(80, 59, 47, 0.1);
-  border: 2px solid rgba(80, 59, 47, 0.1);
+  border: 2px dashed rgba(80, 59, 47, 0.15);
+  transition: all 0.3s ease;
+}
+
+.create-rubric-section:hover {
+  border-style: solid;
+  border-color: rgba(217, 142, 139, 0.4);
+  box-shadow: 0 8px 24px rgba(80, 59, 47, 0.12);
 }
 
 .create-rubric-section h3 {
-  font-size: 1.5rem;
+  font-size: 1.4rem;
   font-weight: 600;
   color: var(--primary-cocoa);
-  margin-bottom: 12px;
+  margin-bottom: 10px;
   font-family: var(--font-title);
 }
 
 .create-rubric-section p {
-  font-size: 1rem;
+  font-size: 0.95rem;
   color: var(--secondary-brown);
-  margin-bottom: 24px;
+  margin-bottom: 22px;
   font-family: var(--font-body);
   line-height: 1.5;
 }
@@ -129,31 +152,33 @@
   color: white;
   border: none;
   border-radius: 12px;
-  padding: 16px 32px;
+  padding: 14px 30px;
   font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.25s ease;
   font-family: var(--font-body);
-  box-shadow: 0 4px 12px rgba(80, 59, 47, 0.2);
+  box-shadow: 0 4px 14px rgba(80, 59, 47, 0.22);
 }
 
 .create-btn:hover {
   background-color: var(--secondary-brown);
   transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(80, 59, 47, 0.25);
+  box-shadow: 0 8px 20px rgba(80, 59, 47, 0.3);
 }
+
+.create-btn:active { transform: translateY(0); }
 
 /* Add Criterion Button */
 .add-criterion-btn {
   background-color: transparent;
-  border: 2px dashed var(--secondary-brown);
+  border: 2px dashed rgba(126, 100, 81, 0.5);
   border-radius: 12px;
-  padding: 16px;
+  padding: 14px;
   font-size: 14px;
   color: var(--secondary-brown);
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.25s ease;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -164,34 +189,27 @@
 }
 
 .add-criterion-btn:hover {
-  background-color: rgba(126, 100, 81, 0.1);
+  background-color: rgba(126, 100, 81, 0.08);
   border-style: solid;
+  border-color: var(--dusty-rose);
+  color: var(--primary-cocoa);
   transform: translateY(-2px);
 }
 
 .plus-icon {
-  font-size: 20px;
+  font-size: 18px;
   font-weight: bold;
+  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-/* Responsive Design */
+.add-criterion-btn:hover .plus-icon {
+  transform: rotate(90deg) scale(1.2);
+}
+
+/* Responsive */
 @media (max-width: 768px) {
-  .header-flex {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 1rem;
-  }
-  
-  .rubrics-grid {
-    grid-template-columns: 1fr;
-    gap: 20px;
-  }
-  
-  .rubric-item {
-    padding: 24px;
-  }
-  
-  .create-rubric-section {
-    padding: 30px 20px;
-  }
+  .header-flex { flex-direction: column; align-items: flex-start; gap: 1rem; }
+  .rubrics-grid { grid-template-columns: 1fr; gap: 16px; }
+  .rubric-item { padding: 22px; }
+  .create-rubric-section { padding: 26px 18px; }
 }

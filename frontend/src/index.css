@@ -12,6 +12,12 @@
   /* Typography */
   --font-title: 'Poppins', sans-serif;
   --font-body: 'Inter', sans-serif;
+
+  /* Enhanced tokens */
+  --transition-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --transition-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+  --shadow-soft: 0 4px 20px rgba(80, 59, 47, 0.1);
+  --shadow-medium: 0 8px 32px rgba(80, 59, 47, 0.14);
 }
 
 /* Global Styles */
@@ -25,12 +31,27 @@ body {
   font-family: var(--font-body);
   background-color: var(--cream-base);
   color: var(--primary-cocoa);
-  overflow: hidden; /* Prevent page scrolling */
+  overflow: hidden;
   height: 100vh;
 }
 
 h1, h2, h3, .logo-text {
   font-family: var(--font-title);
+}
+
+/* Scrollbar Styling */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--accent-blush);
+  border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--dusty-rose);
 }
 
 .app-container {
@@ -41,20 +62,31 @@ h1, h2, h3, .logo-text {
   position: relative;
 }
 
+/* Subtle grain texture on background */
+.app-container::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.4;
+}
+
 /* Main Layout Structure */
 .main-layout {
   display: flex;
-  height: calc(100vh - 50px); /* Updated for 50px navbar height */
+  height: calc(100vh - 50px);
   background-color: var(--cream-base);
   position: relative;
   overflow: hidden;
-  padding-bottom: 40px; /* Increase bottom space to match top spacing */
+  padding-bottom: 40px;
 }
 
 /* Notebook Tabs Container */
 .notebook-tabs-container {
   position: fixed;
-  left: calc(50% - 600px - 90px); /* Move more to the left */
+  left: calc(50% - 600px - 90px);
   top: 45%;
   transform: translateY(-50%);
   z-index: 5;
@@ -64,7 +96,7 @@ h1, h2, h3, .logo-text {
   flex-direction: column;
 }
 
-/* Individual Notebook Tabs - Bookmark Style */
+/* Individual Notebook Tabs */
 .notebook-tab {
   position: relative;
   display: flex;
@@ -74,54 +106,49 @@ h1, h2, h3, .logo-text {
   width: 90px;
   height: 55px;
   background-color: var(--accent-blush);
-  border-radius: 8px 0 0 8px; /* Rounded on left, flat on right */
+  border-radius: 8px 0 0 8px;
   color: var(--primary-cocoa);
   font-size: 11px;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.3s var(--transition-smooth);
   box-shadow: 2px 2px 8px rgba(80, 59, 47, 0.15);
   border: 1px solid rgba(126, 100, 81, 0.2);
   margin-bottom: 15px;
+  user-select: none;
 }
 
-/* Static Vertical Order - Never Changes */
-.notebook-tab:nth-child(1) {
-  /* Essays - Top tab */
-  z-index: 3;
-}
+.notebook-tab:nth-child(1) { z-index: 3; }
+.notebook-tab:nth-child(2) { z-index: 2; }
+.notebook-tab:nth-child(3) { z-index: 1; }
 
-.notebook-tab:nth-child(2) {
-  /* Rubrics - Middle tab */
-  z-index: 2;
-}
-
-.notebook-tab:nth-child(3) {
-  /* History - Bottom tab */
-  z-index: 1;
-}
-
-/* Active Tab State - Bookmark Effect */
 .notebook-tab.active {
   background-color: var(--primary-cocoa);
   color: white;
   width: 110px;
   z-index: 10;
-  box-shadow: 4px 4px 12px rgba(80, 59, 47, 0.25);
-  transform: translateX(1px); /* Reduce a little more */
+  box-shadow: 4px 4px 16px rgba(80, 59, 47, 0.3);
+  transform: translateX(1px);
 }
 
-/* Hover State */
 .notebook-tab:hover:not(.active) {
-  background-color: rgba(236, 199, 192, 0.8);
-  transform: translateX(0px);
+  background-color: rgba(236, 199, 192, 0.85);
+  transform: translateX(3px);
   box-shadow: 3px 3px 10px rgba(80, 59, 47, 0.2);
 }
 
 .notebook-tab .icon {
   font-size: 18px;
   margin-bottom: 4px;
-  transition: transform 0.3s ease;
+  transition: transform 0.3s var(--transition-bounce);
+}
+
+.notebook-tab:hover .icon {
+  transform: scale(1.15);
+}
+
+.notebook-tab.active .icon {
+  transform: scale(1.1);
 }
 
 .notebook-tab .label {
@@ -132,416 +159,7 @@ h1, h2, h3, .logo-text {
   text-align: center;
 }
 
-/* Responsive Design - Keep sidebar consistent on smaller screens */
-@media (max-width: 1400px) {
-  .notebook-tabs-container {
-    left: calc(50% - 540px - 15px); /* Adjust for smaller container but keep further left movement */
-    top: 45%; /* Maintain higher position */
-  }
-}
-
-@media (max-width: 1200px) {
-  .notebook-tabs-container {
-    left: calc(50% - 45vw - 15px); /* Use viewport width for smaller screens but keep further left movement */
-    top: 45%; /* Maintain higher position */
-  }
-}
-
-/* Progressive scaling for different screen sizes */
-@media (max-width: 1000px) {
-  .notebook-tabs-container {
-    left: calc(50% - 45vw - 15px);
-    width: 140px;
-  }
-  
-  .notebook-tab {
-    width: 85px;
-    height: 50px;
-  }
-  
-  .notebook-tab .icon {
-    font-size: 16px;
-  }
-  
-  .notebook-tab .label {
-    font-size: 9px;
-  }
-}
-
-@media (max-width: 900px) {
-  .notebook-tab {
-    width: 75px;
-    height: 45px;
-  }
-  
-  .notebook-tab .icon {
-    font-size: 15px;
-  }
-  
-  .notebook-tab .label {
-    font-size: 8px;
-  }
-}
-
-/* Tablet and Small Desktop - Move WITH Container */
-@media (max-width: 1200px) and (min-width: 769px) {
-  .outer-frame {
-    width: calc(1000px - 40px); /* Smaller container width */
-  }
-  
-  /* Make left panel scrollable */
-  .left-panel {
-    display: flex;
-    flex-direction: column;
-    max-height: calc(100vh - 120px);
-  }
-  
-  .essay-sections {
-    overflow-y: auto;
-    flex: 1;
-  }
-  
-  /* Responsive fonts for tablet */
-  .page-header h2 {
-    font-size: 1.5rem !important;
-  }
-  
-  .page-header p {
-    font-size: 0.9rem !important;
-  }
-  
-  .section-label {
-    font-size: 0.9rem !important;
-  }
-  
-  /* Navigation bar moves with container - no independent positioning */
-}
-
-@media (max-width: 1000px) and (min-width: 769px) {
-  .outer-frame {
-    width: calc(800px - 40px); /* Even smaller container width */
-  }
-  
-  /* Make left panel scrollable */
-  .left-panel {
-    display: flex;
-    flex-direction: column;
-    max-height: calc(100vh - 120px);
-  }
-  
-  .essay-sections {
-    overflow-y: auto;
-    flex: 1;
-  }
-  
-  /* Smaller fonts for small desktop */
-  .page-header h2 {
-    font-size: 1.3rem !important;
-  }
-  
-  .page-header p {
-    font-size: 0.8rem !important;
-  }
-  
-  .section-label {
-    font-size: 0.8rem !important;
-  }
-  
-  /* Navigation bar moves with container - no independent positioning */
-}
-
-/* Mobile Responsive Design */
-@media (max-width: 768px) {
-  .main-layout {
-    height: calc(100vh - 50px);
-    padding-bottom: 20px;
-  }
-  
-  .notebook-tabs-container {
-    /* Move navbar to top on mobile */
-    position: fixed;
-    left: 50%;
-    top: 80px; /* Move down more to touch border */
-    transform: translateX(-50%);
-    width: auto;
-    height: auto;
-    z-index: 5;
-    display: flex;
-    flex-direction: row;
-    gap: 10px;
-  }
-  
-  .notebook-tab {
-    width: 80px;
-    height: 40px;
-    margin-bottom: 0;
-    margin-right: 5px;
-    border-radius: 8px 8px 0 0; /* Rounded on top, flat bottom for top layout */
-    right: auto;
-    left: auto;
-  }
-  
-  .notebook-tab.active {
-    width: 90px;
-    transform: translateY(5px); /* Move down when active */
-  }
-  
-  .notebook-tab:hover:not(.active) {
-    transform: translateY(3px);
-  }
-  
-  .notebook-tab .icon {
-    font-size: 14px; /* Smaller icons */
-    margin-bottom: 2px;
-  }
-  
-  .notebook-tab .label {
-    font-size: 8px; /* Smaller labels */
-    line-height: 1;
-    font-weight: 600;
-    text-transform: uppercase; /* Make labels more readable */
-    letter-spacing: 0.5px;
-  }
-  
-  .outer-frame {
-    position: relative;
-    left: auto;
-    top: auto;
-    transform: none;
-    width: calc(100% - 90px); /* Account for sidebar */
-    height: calc(100vh - 70px);
-    margin: 10px auto; /* Center horizontally */
-    border-radius: 15px;
-    padding: 15px;
-  }
-  
-  .inner-workspace {
-    border-radius: 12px;
-  }
-  
-  .inner-layout {
-    grid-template-columns: 1fr 1fr; /* 2-grid layout for mobile */
-    height: auto;
-    gap: 10px;
-  }
-  
-  .left-panel {
-    padding: 15px;
-    border-right: none;
-    border-bottom: 1px solid rgba(126, 100, 81, 0.2);
-    display: flex;
-    flex-direction: column;
-    max-height: calc(100vh - 120px); /* Limit height for scrolling */
-  }
-  
-  .essay-sections {
-    overflow-y: auto; /* Make essay sections scrollable */
-    flex: 1;
-  }
-  
-  .right-panel {
-    padding: 15px;
-    padding-top: 15px;
-  }
-  
-  /* Smaller fonts for mobile */
-  .page-header h2 {
-    font-size: 1.1rem !important;
-  }
-  
-  .page-header p {
-    font-size: 0.7rem !important;
-  }
-  
-  .section-label {
-    font-size: 0.7rem !important;
-  }
-  
-  /* Rubric cards smaller for mobile */
-  .rubric-card {
-    padding: 12px;
-    margin-bottom: 8px;
-  }
-  
-  .rubric-card h4 {
-    font-size: 0.9rem !important;
-  }
-  
-  .rubric-card p {
-    font-size: 0.6rem !important;
-  }
-  
-  .score-value {
-    font-size: 1.2rem !important;
-  }
-  
-  body {
-    overflow: auto; /* Allow scrolling on mobile */
-    height: auto;
-  }
-}
-
-@media (max-width: 600px) {
-  .notebook-tabs-container {
-    right: 8px;
-    width: 55px;
-  }
-  
-  .notebook-tab {
-    width: 45px;
-    height: 40px;
-    margin-bottom: 8px;
-  }
-  
-  .notebook-tab.active {
-    width: 50px;
-  }
-  
-  .notebook-tab .icon {
-    font-size: 13px;
-  }
-  
-  .notebook-tab .label {
-    font-size: 7px;
-  }
-  
-  .page-header h2 {
-    font-size: 1.2rem !important;
-  }
-  
-  .page-header p {
-    font-size: 0.75rem !important;
-  }
-  
-  .outer-frame {
-    width: calc(100% - 80px);
-    margin: 8px auto; /* Center horizontally */
-  }
-}
-
-@media (max-width: 500px) {
-  .notebook-tabs-container {
-    right: 6px;
-    width: 50px;
-  }
-  
-  .notebook-tab {
-    width: 42px;
-    height: 38px;
-    margin-bottom: 7px;
-  }
-  
-  .notebook-tab.active {
-    width: 47px;
-  }
-  
-  .notebook-tab .icon {
-    font-size: 12px;
-  }
-  
-  .notebook-tab .label {
-    font-size: 6px;
-  }
-  
-  .page-header h2 {
-    font-size: 1.1rem !important;
-  }
-  
-  .page-header p {
-    font-size: 0.7rem !important;
-  }
-}
-
-@media (max-width: 480px) {
-  .notebook-tabs-container {
-    right: 5px;
-    width: 50px;
-  }
-  
-  .notebook-tab {
-    width: 40px;
-    height: 35px;
-    margin-bottom: 8px;
-  }
-  
-  .notebook-tab.active {
-    width: 45px;
-  }
-  
-  .notebook-tab .icon {
-    font-size: 12px; /* Even smaller icons */
-    margin-bottom: 1px;
-  }
-  
-  .notebook-tab .label {
-    font-size: 7px; /* Even smaller labels */
-  }
-  
-  .outer-frame {
-    width: calc(100% - 70px); /* Account for smaller sidebar */
-    height: calc(100vh - 60px);
-    margin: 5px auto; /* Center horizontally */
-    padding: 10px;
-    border-radius: 10px;
-  }
-  
-  .inner-workspace {
-    border-radius: 8px;
-  }
-  
-  .left-panel, .right-panel {
-    padding: 15px;
-  }
-  
-  .page-header h2 {
-    font-size: 1rem !important; /* Even smaller font */
-  }
-  
-  .page-header p {
-    font-size: 0.65rem !important; /* Even smaller font */
-  }
-}
-
-@media (max-width: 400px) {
-  .notebook-tabs-container {
-    right: 3px;
-    width: 45px;
-  }
-  
-  .notebook-tab {
-    width: 35px;
-    height: 30px;
-    margin-bottom: 6px;
-  }
-  
-  .notebook-tab.active {
-    width: 40px;
-  }
-  
-  .notebook-tab .icon {
-    font-size: 11px;
-  }
-  
-  .notebook-tab .label {
-    font-size: 5px;
-  }
-  
-  .page-header h2 {
-    font-size: 0.9rem !important;
-  }
-  
-  .page-header p {
-    font-size: 0.6rem !important;
-  }
-  
-  .outer-frame {
-    width: calc(100% - 60px);
-    margin: 4px auto; /* Center horizontally */
-    padding: 8px;
-  }
-}
-
-/* Outer Frame - Grey Container */
+/* Outer Frame */
 .outer-frame {
   position: absolute;
   left: 50%;
@@ -549,41 +167,53 @@ h1, h2, h3, .logo-text {
   transform: translate(-50%, -50%);
   width: 90%;
   max-width: 1200px;
-  height: 85vh; /* Reduced height to show bottom content */
+  height: 85vh;
   background-color: var(--frame-grey);
   border-radius: 20px;
   padding: 20px;
-  box-shadow: 0 8px 32px rgba(80, 59, 47, 0.12);
+  box-shadow: var(--shadow-medium), 0 0 0 1px rgba(255,255,255,0.5) inset;
   overflow: hidden;
-  margin-top: 20px; /* Space between container and top nav */
-  margin-bottom: 20px; /* Match top spacing at bottom */
+  margin-top: 20px;
+  margin-bottom: 20px;
 }
 
-/* Inner Workspace - White Container */
+/* Inner Workspace */
 .inner-workspace {
   width: 100%;
   height: 100%;
   background-color: #FFFFFF;
   border-radius: 16px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
   overflow: hidden;
   display: flex;
   flex-direction: column;
 }
 
-/* Inner Layout - Split View */
+/* Page entry animation */
+@keyframes fadeSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .inner-layout {
   display: grid;
   grid-template-columns: 60% 40%;
   height: 100%;
   overflow: hidden;
+  animation: fadeSlideIn 0.3s var(--transition-smooth);
 }
 
 /* Left Panel */
 .left-panel {
   padding: 30px;
-  border-right: 1px solid rgba(126, 100, 81, 0.2);
-  overflow: hidden; /* No scrolling */
+  border-right: 1px solid rgba(126, 100, 81, 0.15);
+  overflow: hidden;
   display: flex;
   flex-direction: column;
 }
@@ -607,7 +237,7 @@ h1, h2, h3, .logo-text {
 /* Right Panel */
 .right-panel {
   padding: 30px;
-  overflow-y: auto; /* Only this panel scrolls */
+  overflow-y: auto;
   overflow-x: hidden;
 }
 
@@ -650,14 +280,14 @@ h1, h2, h3, .logo-text {
   padding: 25px;
   background-color: #FFFFFF;
   border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(80, 59, 47, 0.08);
-  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(80, 59, 47, 0.06);
+  transition: all 0.3s var(--transition-smooth);
   border: 1px solid rgba(126, 100, 81, 0.1);
 }
 
 .content-section:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(80, 59, 47, 0.12);
+  box-shadow: 0 6px 18px rgba(80, 59, 47, 0.12);
 }
 
 .content-section h3 {
@@ -689,14 +319,14 @@ h1, h2, h3, .logo-text {
   background-color: #FFFFFF;
   border-radius: 12px;
   padding: 20px;
-  box-shadow: 0 2px 8px rgba(80, 59, 47, 0.08);
-  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(80, 59, 47, 0.06);
+  transition: all 0.3s var(--transition-smooth);
   border: 1px solid rgba(126, 100, 81, 0.1);
 }
 
 .info-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(80, 59, 47, 0.12);
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(80, 59, 47, 0.14);
 }
 
 .info-card h4 {
@@ -713,4 +343,144 @@ h1, h2, h3, .logo-text {
   color: var(--secondary-brown);
   font-family: var(--font-body);
   margin: 0;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 1400px) {
+  .notebook-tabs-container {
+    left: calc(50% - 540px - 15px);
+    top: 45%;
+  }
+}
+
+@media (max-width: 1200px) {
+  .notebook-tabs-container {
+    left: calc(50% - 45vw - 15px);
+    top: 45%;
+  }
+}
+
+@media (max-width: 1200px) and (min-width: 769px) {
+  .outer-frame { width: calc(1000px - 40px); }
+  .left-panel { display: flex; flex-direction: column; max-height: calc(100vh - 120px); }
+  .essay-sections { overflow-y: auto; flex: 1; }
+  .page-header h2 { font-size: 1.5rem !important; }
+  .page-header p { font-size: 0.9rem !important; }
+  .section-label { font-size: 0.9rem !important; }
+}
+
+@media (max-width: 1000px) and (min-width: 769px) {
+  .outer-frame { width: calc(800px - 40px); }
+  .left-panel { display: flex; flex-direction: column; max-height: calc(100vh - 120px); }
+  .essay-sections { overflow-y: auto; flex: 1; }
+  .page-header h2 { font-size: 1.3rem !important; }
+  .page-header p { font-size: 0.8rem !important; }
+  .section-label { font-size: 0.8rem !important; }
+}
+
+@media (max-width: 1000px) {
+  .notebook-tabs-container { left: calc(50% - 45vw - 15px); width: 140px; }
+  .notebook-tab { width: 85px; height: 50px; }
+  .notebook-tab .icon { font-size: 16px; }
+  .notebook-tab .label { font-size: 9px; }
+}
+
+@media (max-width: 900px) {
+  .notebook-tab { width: 75px; height: 45px; }
+  .notebook-tab .icon { font-size: 15px; }
+  .notebook-tab .label { font-size: 8px; }
+}
+
+@media (max-width: 768px) {
+  .main-layout { height: calc(100vh - 50px); padding-bottom: 20px; }
+
+  .notebook-tabs-container {
+    position: fixed;
+    left: 50%;
+    top: 80px;
+    transform: translateX(-50%);
+    width: auto;
+    height: auto;
+    z-index: 5;
+    display: flex;
+    flex-direction: row;
+    gap: 10px;
+  }
+
+  .notebook-tab {
+    width: 80px; height: 40px;
+    margin-bottom: 0; margin-right: 5px;
+    border-radius: 8px 8px 0 0;
+    right: auto; left: auto;
+  }
+
+  .notebook-tab.active { width: 90px; transform: translateY(5px); }
+  .notebook-tab:hover:not(.active) { transform: translateY(3px); }
+  .notebook-tab .icon { font-size: 14px; margin-bottom: 2px; }
+  .notebook-tab .label { font-size: 8px; line-height: 1; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+
+  .outer-frame {
+    position: relative; left: auto; top: auto; transform: none;
+    width: calc(100% - 90px); height: calc(100vh - 70px);
+    margin: 10px auto; border-radius: 15px; padding: 15px;
+  }
+
+  .inner-workspace { border-radius: 12px; }
+  .inner-layout { grid-template-columns: 1fr 1fr; height: auto; gap: 10px; }
+
+  .left-panel {
+    padding: 15px; border-right: none;
+    border-bottom: 1px solid rgba(126, 100, 81, 0.2);
+    display: flex; flex-direction: column;
+    max-height: calc(100vh - 120px);
+  }
+
+  .essay-sections { overflow-y: auto; flex: 1; }
+  .right-panel { padding: 15px; padding-top: 15px; }
+
+  .page-header h2 { font-size: 1.1rem !important; }
+  .page-header p { font-size: 0.7rem !important; }
+  .section-label { font-size: 0.7rem !important; }
+
+  .rubric-card { padding: 12px; margin-bottom: 8px; }
+  .rubric-card h4 { font-size: 0.9rem !important; }
+  .rubric-card p { font-size: 0.6rem !important; }
+  .score-value { font-size: 1.2rem !important; }
+
+  body { overflow: auto; height: auto; }
+}
+
+@media (max-width: 600px) {
+  .notebook-tabs-container { right: 8px; width: 55px; }
+  .notebook-tab { width: 45px; height: 40px; margin-bottom: 8px; }
+  .notebook-tab.active { width: 50px; }
+  .notebook-tab .icon { font-size: 13px; }
+  .notebook-tab .label { font-size: 7px; }
+  .page-header h2 { font-size: 1.2rem !important; }
+  .page-header p { font-size: 0.75rem !important; }
+  .outer-frame { width: calc(100% - 80px); margin: 8px auto; }
+}
+
+@media (max-width: 480px) {
+  .notebook-tabs-container { right: 5px; width: 50px; }
+  .notebook-tab { width: 40px; height: 35px; margin-bottom: 8px; }
+  .notebook-tab.active { width: 45px; }
+  .notebook-tab .icon { font-size: 12px; margin-bottom: 1px; }
+  .notebook-tab .label { font-size: 7px; }
+  .outer-frame { width: calc(100% - 70px); height: calc(100vh - 60px); margin: 5px auto; padding: 10px; border-radius: 10px; }
+  .inner-workspace { border-radius: 8px; }
+  .left-panel, .right-panel { padding: 15px; }
+  .page-header h2 { font-size: 1rem !important; }
+  .page-header p { font-size: 0.65rem !important; }
+}
+
+@media (max-width: 400px) {
+  .notebook-tabs-container { right: 3px; width: 45px; }
+  .notebook-tab { width: 35px; height: 30px; margin-bottom: 6px; }
+  .notebook-tab.active { width: 40px; }
+  .notebook-tab .icon { font-size: 11px; }
+  .notebook-tab .label { font-size: 5px; }
+  .page-header h2 { font-size: 0.9rem !important; }
+  .page-header p { font-size: 0.6rem !important; }
+  .outer-frame { width: calc(100% - 60px); margin: 4px auto; padding: 8px; }
 }

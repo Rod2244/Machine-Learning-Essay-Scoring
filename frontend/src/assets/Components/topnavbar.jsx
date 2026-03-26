@@ -1,15 +1,26 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import '../css/topnavbar.css';
 
-const Topnavbar = () => {
-  const [showDropdown, setShowDropdown] = useState(false);
+const Topnavbar = ({ user, onLogout }) => {
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const dropdownRef = useRef(null);
 
   // Close dropdown when clicking outside
   useEffect(() => {
-    const handleClickOutside = () => setShowDropdown(false);
-    document.addEventListener("click", handleClickOutside);
-    return () => document.removeEventListener("click", handleClickOutside);
+    const handleClickOutside = (e) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        setDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  // Get initials from user name
+  const getInitials = (name) => {
+    if (!name) return '?';
+    return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+  };
 
   return (
     <nav className="top-nav">
@@ -19,50 +30,43 @@ const Topnavbar = () => {
       </div>
 
       <div className="user-section">
-        <div
-          className="profile-wrapper"
-          onClick={(e) => {
-            e.stopPropagation(); // prevent closing immediately
-            setShowDropdown(!showDropdown);
-          }}
-        >
-          <div className="profile-avatar">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none"
-              stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-              <circle cx="12" cy="7" r="4"/>
-            </svg>
-          </div>
+        <button className="settings-btn" title="Settings">⚙️</button>
 
-          <span className="profile-name">User</span>
-
-          <svg
-            className={`chevron ${showDropdown ? 'open' : ''}`}
-            width="14"
-            height="14"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2.5"
+        {/* User Avatar + Dropdown */}
+        <div className="profile-dropdown-wrapper" ref={dropdownRef}>
+          <button
+            className="avatar-btn"
+            onClick={() => setDropdownOpen(prev => !prev)}
+            title={user?.name || 'Account'}
+            aria-expanded={dropdownOpen}
           >
-            <polyline points="6 9 12 15 18 9"/>
-          </svg>
+            <div className="avatar-circle">
+              {getInitials(user?.name)}
+            </div>
+          </button>
 
-          {showDropdown && (
+          {dropdownOpen && (
             <div className="profile-dropdown">
-              <div className="dropdown-item">
-                <span>👤</span> My Profile
+              <div className="dropdown-user-info">
+                <div className="dropdown-avatar">
+                  {getInitials(user?.name)}
+                </div>
+                <div className="dropdown-details">
+                  <span className="dropdown-name">{user?.name || 'User'}</span>
+                  <span className="dropdown-email">{user?.email || ''}</span>
+                </div>
               </div>
-
-              <div className="dropdown-item">
-                <span>⚙️</span> Settings
-              </div>
-
               <div className="dropdown-divider" />
-
-              <div className="dropdown-item logout">
-                <span>🚪</span> Log Out
-              </div>
+              <button
+                className="dropdown-item logout-item"
+                onClick={() => {
+                  setDropdownOpen(false);
+                  onLogout();
+                }}
+              >
+                <span className="dropdown-item-icon">🚪</span>
+                Log Out
+              </button>
             </div>
           )}
         </div>

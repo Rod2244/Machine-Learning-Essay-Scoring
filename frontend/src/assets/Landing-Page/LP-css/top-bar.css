@@ -1,0 +1,127 @@
+/* LANDING PAGE NAVBAR */
+.landing-navbar {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  background: #ffffff;
+  backdrop-filter: blur(10px);
+  padding: 15px 30px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  border-bottom: 1px solid rgba(126, 100, 81, 0.1);
+}
+
+/* LOGO SECTION */
+.landing-logo-section {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.landing-logo-icon {
+  font-size: 24px;
+  color: #7E6451;
+}
+
+.landing-logo-text {
+  font-size: 24px;
+  font-weight: bold;
+  color: #503B2F;
+  margin: 0;
+  font-family: 'Poppins', sans-serif;
+}
+
+/* NAVIGATION LINKS */
+.landing-nav-links {
+  display: flex;
+  gap: 15px;
+  align-items: center;
+}
+
+.landing-nav-link {
+  text-decoration: none;
+  color: #503B2F;
+  font-size: 16px;
+  font-weight: 500;
+  font-family: 'Poppins', sans-serif;
+  transition: all 0.3s ease;
+  position: relative;
+  padding: 8px 16px;
+  border-radius: 20px;
+  min-width: 80px;
+  text-align: center;
+  display: inline-block;
+  border: 2px solid transparent;
+}
+
+.landing-nav-link:hover {
+  color: #7E6451;
+}
+
+.landing-nav-link::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background: #7E6451;
+  transition: width 0.3s ease;
+}
+
+.landing-nav-link:hover::after {
+  width: 100%;
+}
+
+/* ACTIVE STATE */
+.landing-nav-link.active {
+  color: #503B2F;
+  font-weight: 600;
+  background: #ECC7C0;
+  border: 2px solid #ECC7C0;
+}
+
+.landing-nav-link.active::after {
+  width: 0;
+}
+
+/* RESPONSIVE DESIGN */
+@media (max-width: 768px) {
+  .landing-navbar {
+    padding: 12px 20px;
+    flex-direction: column;
+    gap: 15px;
+  }
+  
+  .landing-logo-section {
+    gap: 8px;
+  }
+  
+  .landing-logo-icon {
+    font-size: 20px;
+  }
+  
+  .landing-logo-text {
+    font-size: 20px;
+  }
+  
+  .landing-nav-links {
+    gap: 20px;
+  }
+  
+  .landing-nav-link {
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 480px) {
+  .landing-nav-links {
+    gap: 15px;
+  }
+  
+  .landing-nav-link {
+    font-size: 13px;
+  }
+}

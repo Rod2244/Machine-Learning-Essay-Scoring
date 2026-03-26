@@ -4,20 +4,101 @@ import ScorerPage from './assets/pages/ScorerPage';
 import RubricsSection from './assets/pages/RubricsSection';
 import HistoryPage from './assets/pages/HistoryPage';
 import LoginPage from './assets/pages/LoginPage';
+import Home from './assets/Landing-Page/LP-pages/home';
+import AboutUs from './assets/Landing-Page/LP-pages/about-us';
+import ContactUs from './assets/Landing-Page/LP-pages/contact-us';
 import './index.css';
 
 const App = () => {
   const [user, setUser] = useState(null); // null = not logged in
   const [activeTab, setActiveTab] = useState('essays');
+  const [showLanding, setShowLanding] = useState(true); // Show landing page by default
+  const [currentPage, setCurrentPage] = useState('home'); // Track current landing page
+
+  // Listen for custom event to show landing page
+  React.useEffect(() => {
+    const handleShowLanding = () => {
+      setShowLanding(true);
+      setCurrentPage('home');
+    };
+    window.addEventListener('showLanding', handleShowLanding);
+    return () => window.removeEventListener('showLanding', handleShowLanding);
+  }, []);
+
+  // Listen for custom event to show login page
+  React.useEffect(() => {
+    const handleShowLogin = () => {
+      setShowLanding(false);
+    };
+    window.addEventListener('showLogin', handleShowLogin);
+    return () => window.removeEventListener('showLogin', handleShowLogin);
+  }, []);
+
+  // Listen for custom event to show main app
+  React.useEffect(() => {
+    const handleShowMainApp = () => {
+      if (user) {
+        setShowLanding(false);
+      } else {
+        // If not logged in, show login page
+        setShowLanding(false);
+      }
+    };
+    window.addEventListener('showMainApp', handleShowMainApp);
+    return () => window.removeEventListener('showMainApp', handleShowMainApp);
+  }, [user]);
+
+  // Handle navigation
+  const handleNavigation = (page) => {
+    if (page === 'home') {
+      setShowLanding(true);
+      setCurrentPage('home');
+    } else if (page === 'about') {
+      setShowLanding(true);
+      setCurrentPage('about');
+    } else if (page === 'contact') {
+      setShowLanding(true);
+      setCurrentPage('contact');
+    }
+  };
+
+  // Listen for navigation events
+  React.useEffect(() => {
+    const handleNavigation = (e) => {
+      handleNavigation(e.detail.page);
+    };
+    window.addEventListener('navigate', handleNavigation);
+    return () => window.removeEventListener('navigate', handleNavigation);
+  }, []);
+
+  const renderLandingPage = () => {
+    switch (currentPage) {
+      case 'home':
+        return <Home onNavigate={handleNavigation} />;
+      case 'about':
+        return <AboutUs onNavigate={handleNavigation} />;
+      case 'contact':
+        return <ContactUs onNavigate={handleNavigation} />;
+      default:
+        return <Home onNavigate={handleNavigation} />;
+    }
+  };
 
   const handleLogin = (userData) => {
     setUser(userData);
+    setShowLanding(false); // Go to main app after login
   };
 
   const handleLogout = () => {
     setUser(null);
     setActiveTab('essays');
+    setShowLanding(false); // Show login page after logout
   };
+
+  // Show landing page if requested
+  if (showLanding) {
+    return renderLandingPage();
+  }
 
   // Show login page if not logged in
   if (!user) {

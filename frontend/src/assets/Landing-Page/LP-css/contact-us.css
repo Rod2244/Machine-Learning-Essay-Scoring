@@ -1,0 +1,118 @@
+/* CONTACT US PAGE SPECIFIC STYLES */
+
+/* Contact Page Simple Hero - No Box */
+.contact-hero {
+  padding: 0;
+  background: transparent;
+  border-radius: 0;
+  backdrop-filter: none;
+  box-shadow: none;
+}
+
+/* Contact Layout */
+.contact-layout {
+  display: flex;
+  gap: 80px;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 40px 0;
+}
+
+.contact-left {
+  flex: 1;
+  max-width: 500px;
+}
+
+.contact-right {
+  flex: 1;
+  max-width: 500px;
+}
+
+.contact-form-box {
+  background: rgba(236, 232, 223, 0.9);
+  border: 2px solid #503B2F;
+  border-radius: 15px;
+  padding: 40px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+  backdrop-filter: blur(5px);
+}
+
+.contact-form-box h3 {
+  font-size: 1.4rem;
+  color: #503B2F;
+  margin-bottom: 20px;
+  font-family: 'Poppins', sans-serif;
+  font-weight: 600;
+}
+
+.contact-left h2 {
+  font-size: 2rem;
+  color: #503B2F;
+  margin-bottom: 15px;
+  font-family: 'Poppins', sans-serif;
+  font-weight: 600;
+}
+
+/* Get in Touch Title - Bold Poppins */
+.get-in-touch-title {
+  font-family: 'Poppins', sans-serif;
+  font-size: 30px;
+  font-weight: 900;
+  color: #503B2F;
+  margin-bottom: 30px;
+  letter-spacing: -1px;
+  line-height: 1.0;
+  font-style: bold;
+}
+
+.contact-details p {
+  margin-bottom: 15px;
+  font-size: 1.1rem;
+}
+
+.contact-form {
+  margin-top: 30px;
+}
+
+/* Add more spacing for about sections */
+.contact-left .about-section {
+  margin-bottom: 50px;
+}
+
+.contact-left .about-section:last-child {
+  margin-bottom: 0;
+}
+
+/* Form Styles */
+.form-group {
+  margin-bottom: 30px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 600;
+  color: #503B2F;
+}
+
+.form-group input,
+.form-group textarea {
+  width: 100%;
+  padding: 12px;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-family: inherit;
+  transition: border-color 0.3s;
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: #7E6451;
+}
+
+.form-group textarea {
+  resize: vertical;
+  min-height: 120px;
+}

@@ -1,0 +1,230 @@
+/* ABOUT US PAGE SPECIFIC STYLES */
+
+/* About Us Content */
+.about-content {
+  margin-top: 40px;
+  max-width: 800px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.about-section {
+  margin-bottom: 40px;
+}
+
+.about-section h3 {
+  font-size: 1.4rem;
+  color: #503B2F;
+  margin-bottom: 15px;
+  font-family: 'Poppins', sans-serif;
+  font-weight: 600;
+}
+
+.about-section p {
+  font-size: 1rem;
+  line-height: 1.7;
+  color: black;
+  margin-bottom: 15px;
+}
+
+.about-section p:last-child {
+  margin-bottom: 0;
+}
+
+/* Developers List Styling */
+.developers-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 10px;
+  margin-top: 15px;
+}
+
+.developers-list p {
+  font-size: 1rem;
+  line-height: 1.6;
+  color: black;
+  margin-bottom: 5px;
+  padding: 8px 12px;
+  background: rgba(236, 232, 223, 0.3);
+  border-radius: 8px;
+  border-left: 4px solid #503B2F;
+  font-weight: 500;
+}
+
+/* About Us Specific CTA */
+.about-us-cta {
+  text-align: left;
+}
+
+.about-us-cta .cta-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 40px;
+}
+
+.about-us-cta .cta-text {
+  flex: 1;
+  text-align: left;
+}
+
+.about-us-cta .cta-image {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.about-us-cta .students-image {
+  width: 500px;
+  height: auto;
+  object-fit: contain;
+  border-radius: 10px;
+}
+
+/* About Us Button Styling */
+.about-us-cta .secondary-btn {
+  background: white;
+  color: #503B2F;
+  padding: 14px 35px;
+  border: none;
+  border-radius: 30px;
+  font-family: 'Poppins', sans-serif;
+  font-weight: 600;
+  font-size: 16px;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.about-us-cta .secondary-btn:hover {
+  background: #f8f8f8;
+  transform: translateY(-2px);
+}
+
+/* TABLET STYLES */
+@media (max-width: 768px) {
+  .about-content {
+    margin-top: 30px;
+    max-width: 100%;
+    padding: 0 20px;
+  }
+  
+  .about-section {
+    margin-bottom: 30px;
+  }
+  
+  .about-section h3 {
+    font-size: 1.2rem;
+    margin-bottom: 12px;
+  }
+  
+  .about-section p {
+    font-size: 0.95rem;
+    line-height: 1.6;
+  }
+  
+  .developers-list {
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 8px;
+  }
+  
+  .developers-list p {
+    font-size: 0.9rem;
+    padding: 6px 10px;
+  }
+  
+  .about-us-cta .cta-content {
+    flex-direction: column;
+    gap: 30px;
+    text-align: center;
+  }
+  
+  .about-us-cta .cta-text {
+    text-align: center;
+  }
+  
+  .about-us-cta .students-image {
+    width: 400px;
+  }
+  
+  .about-us-cta .secondary-btn {
+    padding: 12px 30px;
+    font-size: 14px;
+  }
+}
+
+/* MOBILE STYLES */
+@media (max-width: 568px) {
+  .about-content {
+    margin-top: 20px;
+    padding: 0 15px;
+  }
+  
+  .about-section {
+    margin-bottom: 25px;
+  }
+  
+  .about-section h3 {
+    font-size: 1.1rem;
+    margin-bottom: 10px;
+  }
+  
+  .about-section p {
+    font-size: 0.9rem;
+    line-height: 1.5;
+  }
+  
+  .developers-list {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+  
+  .developers-list p {
+    font-size: 0.85rem;
+    padding: 5px 8px;
+  }
+  
+  .about-us-cta .cta-content {
+    gap: 20px;
+  }
+  
+  .about-us-cta .students-image {
+    width: 300px;
+  }
+  
+  .about-us-cta .secondary-btn {
+    padding: 10px 25px;
+    font-size: 13px;
+  }
+}
+
+/* SMALL MOBILE STYLES */
+@media (max-width: 380px) {
+  .about-content {
+    padding: 0 10px;
+  }
+  
+  .about-section h3 {
+    font-size: 1rem;
+  }
+  
+  .about-section p {
+    font-size: 0.85rem;
+  }
+  
+  .developers-list p {
+    font-size: 0.8rem;
+    padding: 4px 6px;
+  }
+  
+  .about-us-cta .students-image {
+    width: 250px;
+  }
+  
+  .about-us-cta .secondary-btn {
+    padding: 8px 20px;
+    font-size: 12px;
+  }
+}

@@ -31,8 +31,10 @@ body {
   font-family: var(--font-body);
   background-color: var(--cream-base);
   color: var(--primary-cocoa);
-  overflow: hidden;
-  height: 100vh;
+  overflow-x: hidden;
+  overflow-y: auto;
+  height: auto;
+  min-height: 100vh;
 }
 
 h1, h2, h3, .logo-text {

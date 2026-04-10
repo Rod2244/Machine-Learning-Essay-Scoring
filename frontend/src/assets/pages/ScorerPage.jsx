@@ -4,9 +4,9 @@ import '../css/ScorerPage.css';
 const ScorerPage = () => {
   const [essayPrompt, setEssayPrompt] = useState('');
 
-  const clearEssayPrompt = () => {
-    setEssayPrompt('');
-  };
+  // 
+  const [studentResponse, setStudentResponse] = useState('');
+  const [dragActive, setDragActive] = useState(false);
 
   return (
     <div className="main-notebook-container">
@@ -46,13 +46,40 @@ const ScorerPage = () => {
             </div>
             
             {/* Student Response Section */}
-            <div className="input-section">
+              <div className="input-section">
               <div className="section-label">Student Response</div>
-              <textarea 
-                className="student-response-textarea"
-                placeholder="Enter student response here..."
-              />
-            </div>
+                <textarea className={`student-response-textarea ${dragActive ? "drag-active" : ""}`}
+                placeholder="Enter student response here or drag & drop a file..."
+                value={studentResponse}
+                onChange={(e) => setStudentResponse(e.target.value)}
+                onDragOver={(e) => {
+                  e.preventDefault();
+                setDragActive(true);
+         }}
+
+          onDragLeave={() => setDragActive(false)}
+
+          onDrop={(e) => {
+            e.preventDefault();
+            setDragActive(false);
+
+            const file = e.dataTransfer.files[0];
+            if (!file) return;
+
+            // ✅ TXT = auto read content
+            if (file.type === "text/plain") {
+              const reader = new FileReader();
+              reader.onload = (event) => {
+                setStudentResponse(event.target.result);
+              };
+              reader.readAsText(file);
+            } else {
+              // ✅ other files = show filename
+              setStudentResponse(`[Attached File]: ${file.name}`);
+            }
+          }}
+        />
+        </div>
             
             {/* Bottom Buttons */}
             <div className="button-group">

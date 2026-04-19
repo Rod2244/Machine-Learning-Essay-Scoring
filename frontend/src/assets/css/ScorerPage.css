@@ -65,7 +65,7 @@
   border-radius: 8px;
   font-size: 0.95rem;
   font-family: var(--font-body);
-  background-color: #FFFFFF;
+  background-color: #ffffff;
   color: var(--primary-cocoa);
   transition: all 0.3s ease;
 }
@@ -103,7 +103,7 @@
   border-radius: 8px;
   font-size: 0.95rem;
   font-family: var(--font-body);
-  background-color: #FFFFFF;
+  background-color: #ffffff;
   color: var(--primary-cocoa);
   resize: vertical;
   transition: all 0.3s ease;
@@ -194,7 +194,7 @@
 }
 
 .rubric-card {
-  background-color: #FFFFFF;
+  background-color: #ffffff;
   border-radius: 12px;
   padding: 20px;
   box-shadow: 0 2px 8px rgba(80, 59, 47, 0.08);
@@ -323,12 +323,193 @@
   color: var(--primary-cocoa);
 }
 
+/* ML Integration Styles */
+
+/* Error Message */
+.error-message {
+  padding: 16px;
+  margin-top: 12px;
+  background-color: #fee;
+  border: 2px solid #f88;
+  border-radius: 8px;
+  color: #c33;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.error-message p {
+  margin: 0;
+}
+
+/* Empty State */
+.empty-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+  color: var(--secondary-brown);
+  font-size: 1rem;
+  text-align: center;
+  opacity: 0.7;
+}
+
+/* Progress Bar */
+.progress-bar {
+  width: 100%;
+  height: 8px;
+  background-color: rgba(126, 100, 81, 0.1);
+  border-radius: 4px;
+  overflow: hidden;
+  margin-top: 8px;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent-rose), #ff9999);
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+/* Confidence Meter */
+.confidence-meter {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(80, 59, 47, 0.1);
+}
+
+.confidence-label {
+  font-size: 0.85rem;
+  color: var(--secondary-brown);
+  font-weight: 500;
+  margin: 0 0 8px 0;
+}
+
+.confidence-bar {
+  width: 100%;
+  height: 6px;
+  background-color: rgba(126, 100, 81, 0.1);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.confidence-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--primary-cocoa), var(--accent-rose));
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+
+/* Rubric Selector Styles */
+.rubric-selector {
+  margin-bottom: 16px;
+  padding-bottom: 16px;
+  border-bottom: 2px solid rgba(80, 59, 47, 0.1);
+}
+
+.rubric-selector label {
+  display: block;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--primary-cocoa);
+  margin-bottom: 8px;
+  font-family: var(--font-title);
+}
+
+.rubric-selector select {
+  width: 100%;
+  padding: 10px 12px;
+  border: 2px solid var(--accent-blush);
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-family: var(--font-body);
+  background-color: #ffffff;
+  color: var(--primary-cocoa);
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.rubric-selector select:hover {
+  border-color: var(--accent-rose);
+}
+
+.rubric-selector select:focus {
+  outline: none;
+  border-color: var(--accent-rose);
+  box-shadow: 0 0 0 3px rgba(217, 142, 139, 0.1);
+}
+
+.rubric-selector select:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Rubric Preview Styles */
+.rubric-preview {
+  margin-top: 16px;
+  padding: 16px;
+  background-color: rgba(217, 142, 139, 0.05);
+  border-left: 4px solid var(--accent-rose);
+  border-radius: 6px;
+}
+
+.rubric-preview h4 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--primary-cocoa);
+  margin-bottom: 12px;
+  font-family: var(--font-title);
+}
+
+.rubric-preview ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.rubric-preview li {
+  font-size: 0.9rem;
+  color: var(--secondary-brown);
+  padding: 6px 0;
+  border-bottom: 1px solid rgba(80, 59, 47, 0.1);
+}
+
+.rubric-preview li:last-child {
+  border-bottom: none;
+}
+
+.rubric-preview li strong {
+  color: var(--accent-rose);
+}
+
+.total-points {
+  font-size: 0.95rem;
+  color: var(--primary-cocoa);
+  font-weight: 600;
+  padding-top: 8px;
+  margin-top: 8px;
+  border-top: 2px solid rgba(80, 59, 47, 0.15);
+}
+
+/* Disabled State for Buttons */
+.generate-btn:disabled,
+.clear-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.generate-btn:disabled:hover,
+.clear-btn:disabled:hover {
+  transform: none;
+  box-shadow: none;
+}
+
 /* Responsive Design */
 @media (max-width: 1200px) {
   .inner-layout {
     grid-template-columns: 1fr;
   }
-  
+
   .right-panel {
     border-left: none;
     border-top: 1px solid rgba(126, 100, 81, 0.2);
@@ -340,31 +521,31 @@
   .page-header h2 {
     font-size: 1.8rem;
   }
-  
+
   .page-header p {
     font-size: 0.9rem;
   }
-  
+
   .section-label {
     font-size: 0.85rem;
   }
-  
+
   .essay-prompt-input {
     font-size: 0.9rem;
   }
-  
+
   .student-response-textarea {
     font-size: 0.9rem;
   }
-  
+
   .rubric-card h4 {
     font-size: 1rem;
   }
-  
+
   .score-value {
     font-size: 1.8rem;
   }
-  
+
   .total-score-value {
     font-size: 2.5rem;
   }
@@ -374,31 +555,31 @@
   .page-header h2 {
     font-size: 1.6rem;
   }
-  
+
   .page-header p {
     font-size: 0.85rem;
   }
-  
+
   .section-label {
     font-size: 0.8rem;
   }
-  
+
   .essay-prompt-input {
     font-size: 0.85rem;
   }
-  
+
   .student-response-textarea {
     font-size: 0.85rem;
   }
-  
+
   .rubric-card h4 {
     font-size: 0.95rem;
   }
-  
+
   .score-value {
     font-size: 1.6rem;
   }
-  
+
   .total-score-value {
     font-size: 2.2rem;
   }
@@ -408,105 +589,106 @@
   .main-notebook-container {
     padding: 0;
   }
-  
+
   .inner-layout {
     grid-template-columns: 1fr;
     height: auto;
     overflow: visible;
   }
-  
+
   .left-panel {
     padding: 20px;
     border-right: none;
     border-bottom: 1px solid rgba(126, 100, 81, 0.2);
     min-height: auto;
   }
-  
+
   .right-panel {
     padding: 20px;
     padding-top: 20px;
   }
-  
+
   .page-header h2 {
     font-size: 1.2rem !important;
   }
-  
+
   .page-header p {
     font-size: 0.75rem !important;
   }
-  
+
   .section-label {
     font-size: 0.8rem !important;
   }
-  
+
   .essay-prompt-input {
     font-size: 0.85rem;
     padding: 10px 35px 10px 12px;
   }
-  
+
   .student-response-textarea {
     font-size: 0.85rem;
     padding: 12px;
     min-height: 150px;
   }
-  
+
   .button-group {
     flex-direction: column;
     gap: 10px;
     margin-top: 15px;
   }
-  
+
   .input-row {
     flex-direction: column;
     align-items: stretch;
     gap: 10px;
   }
-  
+
   .input-wrapper {
     width: 100%;
   }
-  
+
   .save-btn {
     width: 100%;
     padding: 12px 16px;
     font-size: 0.85rem;
   }
-  
-  .clear-btn, .generate-btn {
+
+  .clear-btn,
+  .generate-btn {
     padding: 12px 16px;
     font-size: 0.85rem;
   }
-  
+
   .panel-header {
     flex-direction: column;
     align-items: flex-start;
     gap: 10px;
   }
-  
+
   .rubric-card {
     padding: 16px;
   }
-  
+
   .rubric-card h4 {
     font-size: 0.9rem;
   }
-  
+
   .score-value {
     font-size: 1.3rem;
   }
-  
+
   .total-score-box {
     padding: 20px;
   }
-  
+
   .total-score-value {
     font-size: 1.8rem;
   }
-  
+
   .total-score-box h4 {
     font-size: 1rem;
   }
-  
+
   .overall-feedback {
     font-size: 0.8rem;
   }
@@ -516,47 +698,49 @@
   .page-header h2 {
     font-size: 1.1rem;
   }
-  
+
   .page-header p {
     font-size: 0.7rem;
   }
-  
+
   .section-label {
     font-size: 0.75rem;
   }
-  
+
   .essay-prompt-input {
     font-size: 0.8rem;
     padding: 9px 32px 9px 11px;
   }
-  
+
   .student-response-textarea {
     font-size: 0.8rem;
     padding: 11px;
     min-height: 140px;
   }
-  
-  .save-btn, .clear-btn, .generate-btn {
+
+  .save-btn,
+  .clear-btn,
+  .generate-btn {
     font-size: 0.8rem;
     padding: 11px 15px;
   }
-  
+
   .rubric-card h4 {
     font-size: 0.85rem;
   }
-  
+
   .score-value {
     font-size: 1.2rem;
   }
-  
+
   .total-score-value {
     font-size: 1.6rem;
   }
-  
+
   .total-score-box h4 {
     font-size: 0.95rem;
   }
-  
+
   .overall-feedback {
     font-size: 0.75rem;
   }
@@ -566,124 +750,129 @@
   .page-header h2 {
     font-size: 1rem;
   }
-  
+
   .page-header p {
     font-size: 0.65rem;
   }
-  
+
   .section-label {
     font-size: 0.7rem;
   }
-  
+
   .essay-prompt-input {
     font-size: 0.75rem;
     padding: 8px 30px 8px 10px;
   }
-  
+
   .student-response-textarea {
     font-size: 0.75rem;
     padding: 10px;
     min-height: 130px;
   }
-  
-  .save-btn, .clear-btn, .generate-btn {
+
+  .save-btn,
+  .clear-btn,
+  .generate-btn {
     font-size: 0.75rem;
     padding: 10px 14px;
   }
-  
+
   .rubric-card {
     padding: 14px;
   }
-  
+
   .rubric-card h4 {
     font-size: 0.8rem;
   }
-  
+
   .score-value {
     font-size: 1.1rem;
   }
-  
+
   .total-score-value {
     font-size: 1.4rem;
   }
-  
+
   .total-score-box h4 {
     font-size: 0.9rem;
   }
-  
+
   .overall-feedback {
     font-size: 0.7rem;
   }
 }
 
 @media (max-width: 480px) {
-  .left-panel, .right-panel {
+  .left-panel,
+  .right-panel {
     padding: 15px;
   }
-  
+
   .page-header h2 {
     font-size: 1rem;
   }
-  
+
   .page-header p {
     font-size: 0.7rem;
   }
-  
+
   .section-label {
     font-size: 0.75rem;
   }
-  
+
   .essay-prompt-input {
     font-size: 0.8rem;
     padding: 8px 30px 8px 10px;
   }
-  
+
   .student-response-textarea {
     font-size: 0.8rem;
     padding: 10px;
     min-height: 120px;
   }
-  
-  .save-btn, .clear-btn, .generate-btn {
+
+  .save-btn,
+  .clear-btn,
+  .generate-btn {
     font-size: 0.8rem;
     padding: 10px 14px;
   }
-  
+
   .rubric-cards {
     gap: 12px;
   }
-  
+
   .rubric-card {
     padding: 14px;
   }
-  
+
   .rubric-card h4 {
     font-size: 0.85rem;
   }
-  
+
   .total-score-box {
     padding: 16px;
   }
-  
+
   .total-score-value {
     font-size: 1.5rem;
   }
-  
+
   .total-score-box h4 {
     font-size: 0.9rem;
   }
-  
+
   .overall-feedback {
     font-size: 0.75rem;
   }
-  
+
   .clear-input-btn {
     width: 20px;
     height: 20px;
     font-size: 14px;
     right: 6px;
   }
-  
+
   .essay-prompt-input {
     padding: 8px 30px 8px 10px;
   }
@@ -693,55 +882,57 @@
   .page-header h2 {
     font-size: 0.9rem;
   }
-  
+
   .page-header p {
     font-size: 0.6rem;
   }
-  
+
   .section-label {
     font-size: 0.65rem;
   }
-  
+
   .essay-prompt-input {
     font-size: 0.7rem;
     padding: 7px 28px 7px 9px;
   }
-  
+
   .student-response-textarea {
     font-size: 0.7rem;
     padding: 9px;
     min-height: 110px;
   }
-  
-  .save-btn, .clear-btn, .generate-btn {
+
+  .save-btn,
+  .clear-btn,
+  .generate-btn {
     font-size: 0.7rem;
     padding: 9px 12px;
   }
-  
+
   .rubric-card {
     padding: 12px;
   }
-  
+
   .rubric-card h4 {
     font-size: 0.75rem;
   }
-  
+
   .score-value {
     font-size: 1rem;
   }
-  
+
   .total-score-value {
     font-size: 1.3rem;
   }
-  
+
   .total-score-box h4 {
     font-size: 0.85rem;
   }
-  
+
   .overall-feedback {
     font-size: 0.65rem;
   }
-  
+
   .clear-input-btn {
     width: 18px;
     height: 18px;
@@ -750,8 +941,8 @@
   }
 
   .student-response-textarea.drag-active {
-  border-color: var(--accent-rose);
-  background-color: var(--accent-blush);
-  box-shadow: 0 0 0 3px rgba(217, 142, 139, 0.2);
-}
+    border-color: var(--accent-rose);
+    background-color: var(--accent-blush);
+    box-shadow: 0 0 0 3px rgba(217, 142, 139, 0.2);
+  }
 }

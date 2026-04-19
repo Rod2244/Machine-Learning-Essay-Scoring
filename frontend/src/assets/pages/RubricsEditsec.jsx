@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import '../css/RubricsEditsec.css';
 
+// Default criteria — ginagamit pag walang existing criteria ang rubric
 const DEFAULT_CRITERIA = [
   {
     id: 1, name: 'Content & Ideas',
@@ -44,10 +45,13 @@ const DEFAULT_CRITERIA = [
   },
 ];
 
-const RubricsEditsec = ({ onSave, onCancel }) => {
+// Tinatanggap na yung `rubric` prop para ma-pre-fill ang title ng selected essay type
+const RubricsEditsec = ({ rubric, onSave, onCancel }) => {
   const [criteria, setCriteria] = useState(DEFAULT_CRITERIA);
   const [expandedId, setExpandedId] = useState(null);
-  const [rubricTitle, setRubricTitle] = useState('Essay Scoring Rubric');
+
+  // Gamitin ang title ng piniling rubric, hindi hardcoded
+  const [rubricTitle, setRubricTitle] = useState(rubric?.title || 'Essay Scoring Rubric');
 
   const maxTotal = criteria.reduce(
     (sum, c) => sum + Math.max(...c.levels.map(l => l.score)), 0
@@ -74,6 +78,7 @@ const RubricsEditsec = ({ onSave, onCancel }) => {
         { label: 'Beginning',  score: 1,  descriptor: '' },
       ],
     }]);
+    // Auto-expand yung bagong criterion
     setExpandedId(id);
   };
 
@@ -94,10 +99,16 @@ const RubricsEditsec = ({ onSave, onCancel }) => {
     <div className="re-container">
       <div className="re-header">
         <div className="re-header-left">
-          <input className="re-title-input" value={rubricTitle}
-            onChange={e => setRubricTitle(e.target.value)} placeholder="Rubric Title" />
+          {/* Editable yung title — makikita yung essay type name dito */}
+          <input
+            className="re-title-input"
+            value={rubricTitle}
+            onChange={e => setRubricTitle(e.target.value)}
+            placeholder="Rubric Title"
+          />
           <p className="re-subtitle">Click a criterion to expand and edit its scoring levels.</p>
         </div>
+        {/* Total points badge — auto-calculate habang nag-eEdit */}
         <div className="re-score-badge">
           <span className="re-score-num">{maxTotal}</span>
           <span className="re-score-label">total pts</span>
@@ -107,6 +118,7 @@ const RubricsEditsec = ({ onSave, onCancel }) => {
       <div className="re-criteria-list">
         {criteria.map((c, i) => (
           <div key={c.id} className={`re-card ${expandedId === c.id ? 'expanded' : ''}`}>
+            {/* I-click para palawakin o i-collapse ang criterion */}
             <div className="re-card-top" onClick={() => setExpandedId(expandedId === c.id ? null : c.id)}>
               <div className="re-card-left">
                 <span className="re-card-index">{String(i + 1).padStart(2, '0')}</span>
@@ -118,6 +130,7 @@ const RubricsEditsec = ({ onSave, onCancel }) => {
                 </div>
               </div>
               <div className="re-card-right">
+                {/* Score pills — quick view ng pts per level */}
                 <div className="re-level-pills">
                   {c.levels.map((l, li) => (
                     <span key={li} className={`re-level-pill re-level-pill--${li}`}>{l.score}</span>
@@ -132,38 +145,58 @@ const RubricsEditsec = ({ onSave, onCancel }) => {
                 <div className="re-top-fields">
                   <div className="re-field-row">
                     <label className="re-field-label">Criterion Name</label>
-                    <input className="re-field-input" value={c.name}
+                    <input
+                      className="re-field-input"
+                      value={c.name}
                       onChange={e => updateCriterion(c.id, 'name', e.target.value)}
-                      placeholder="e.g. Content & Ideas" />
+                      placeholder="e.g. Content & Ideas"
+                    />
                   </div>
                   <div className="re-field-row">
                     <label className="re-field-label">Description</label>
-                    <input className="re-field-input" value={c.description}
+                    <input
+                      className="re-field-input"
+                      value={c.description}
                       onChange={e => updateCriterion(c.id, 'description', e.target.value)}
-                      placeholder="What does this criterion evaluate?" />
+                      placeholder="What does this criterion evaluate?"
+                    />
                   </div>
                 </div>
 
+                {/* Scoring levels — 4 columns: Excellent, Proficient, Developing, Beginning */}
                 <div className="re-levels-section">
                   <p className="re-levels-heading">Scoring Levels</p>
                   <div className="re-levels-grid">
                     {c.levels.map((l, li) => (
                       <div key={li} className={`re-level-card re-level-card--${li}`}>
                         <div className="re-level-header">
-                          <input className="re-level-label-input" value={l.label}
-                            onChange={e => updateLevel(c.id, li, 'label', e.target.value)} />
-                          <input className="re-level-score-input" type="number" min={0} value={l.score}
-                            onChange={e => updateLevel(c.id, li, 'score', Number(e.target.value))} />
+                          <input
+                            className="re-level-label-input"
+                            value={l.label}
+                            onChange={e => updateLevel(c.id, li, 'label', e.target.value)}
+                          />
+                          <input
+                            className="re-level-score-input"
+                            type="number"
+                            min={0}
+                            value={l.score}
+                            onChange={e => updateLevel(c.id, li, 'score', Number(e.target.value))}
+                          />
                           <span className="re-level-pts">pts</span>
                         </div>
-                        <textarea className="re-level-descriptor" rows={3} value={l.descriptor}
+                        <textarea
+                          className="re-level-descriptor"
+                          rows={3}
+                          value={l.descriptor}
                           onChange={e => updateLevel(c.id, li, 'descriptor', e.target.value)}
-                          placeholder="Describe performance at this level..." />
+                          placeholder="Describe performance at this level..."
+                        />
                       </div>
                     ))}
                   </div>
                 </div>
 
+                {/* Move up/down at delete — para ma-reorder or matanggal ang criterion */}
                 <div className="re-card-actions">
                   <button className="re-move-btn" onClick={() => move(i, -1)} disabled={i === 0}>↑</button>
                   <button className="re-move-btn" onClick={() => move(i, 1)} disabled={i === criteria.length - 1}>↓</button>
@@ -181,6 +214,7 @@ const RubricsEditsec = ({ onSave, onCancel }) => {
 
       <div className="re-footer">
         <button className="re-cancel-btn" onClick={onCancel}>Cancel</button>
+        {/* I-pass lahat ng data pataas — title + criteria */}
         <button className="re-save-btn" onClick={() => onSave?.({ title: rubricTitle, criteria })}>
           Save Rubric
         </button>

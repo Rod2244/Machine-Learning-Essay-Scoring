@@ -1,11 +1,18 @@
 import React, { useState } from 'react';
 import '../css/ScorerPage.css';
+import ConfirmationModal from "../Components/confirmationModal";
 
 const ScorerPage = () => {
   const [essayPrompt, setEssayPrompt] = useState('');
+  const [studentResponse, setStudentResponse] = useState('');
+  const [dragActive, setDragActive] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const clearEssayPrompt = () => {
-    setEssayPrompt('');
+  const clearEssayPrompt = () => setEssayPrompt('');
+
+  const handleSaveRubrics = (updatedRubrics) => {
+    console.log('Saved rubrics:', updatedRubrics);
+    // TODO: update your rubric state here when you have dynamic rubric data
   };
 
   return (
@@ -48,9 +55,33 @@ const ScorerPage = () => {
             {/* Student Response Section */}
             <div className="input-section">
               <div className="section-label">Student Response</div>
-              <textarea 
-                className="student-response-textarea"
-                placeholder="Enter student response here..."
+              <textarea
+                className={`student-response-textarea ${dragActive ? "drag-active" : ""}`}
+                placeholder="Enter student response here or drag & drop a file..."
+                value={studentResponse}
+                onChange={(e) => setStudentResponse(e.target.value)}
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  setDragActive(true);
+                }}
+                onDragLeave={() => setDragActive(false)}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  setDragActive(false);
+
+                  const file = e.dataTransfer.files[0];
+                  if (!file) return;
+
+                  if (file.type === "text/plain") {
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                      setStudentResponse(event.target.result);
+                    };
+                    reader.readAsText(file);
+                  } else {
+                    setStudentResponse(`[Attached File]: ${file.name}`);
+                  }
+                }}
               />
             </div>
             
@@ -66,7 +97,8 @@ const ScorerPage = () => {
         <div className="right-panel">
           <div className="panel-header">
             <h3 className="panel-title">Rubric Evaluation</h3>
-            <button className="edit-icon">✏️</button>
+            {/* Edit button now opens the modal */}
+            <button className="edit-icon" onClick={() => setIsModalOpen(true)}>✏️</button>
           </div>
           
           <div className="rubric-cards">
@@ -120,6 +152,13 @@ const ScorerPage = () => {
           </div>
         </div>
       </div>
+
+      {/* Rubric Edit Modal */}
+      <ConfirmationModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSave={handleSaveRubrics}
+      />
     </div>
   );
 };

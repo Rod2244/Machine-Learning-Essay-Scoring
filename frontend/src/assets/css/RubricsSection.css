@@ -1,4 +1,4 @@
-/* Rubrics Section Styles - Enhanced */
+/* Rubrics Section Styles */
 .page-content {
   height: 100%;
   display: flex;
@@ -15,18 +15,11 @@
   margin-bottom: 2rem;
 }
 
-.header-flex {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 8px;
-}
-
 .page-header h2 {
   font-size: 2rem;
   font-weight: 600;
   color: var(--primary-cocoa);
-  margin: 0;
+  margin: 0 0 6px 0;
   font-family: var(--font-title);
 }
 
@@ -38,36 +31,11 @@
   font-family: var(--font-body);
 }
 
-.edit-btn {
-  background-color: var(--primary-cocoa);
-  color: white;
-  border: none;
-  border-radius: 12px;
-  padding: 10px 20px;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.25s ease;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-family: var(--font-body);
-}
-
-.edit-btn:hover {
-  background-color: var(--secondary-brown);
-  transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(80, 59, 47, 0.25);
-}
-
-.edit-btn:active { transform: translateY(0); }
-
-/* Rubrics Grid */
+/* Grid ng rubric cards */
 .rubrics-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 24px;
-  margin-bottom: 32px;
 }
 
 .rubric-item {
@@ -78,13 +46,28 @@
   transition: all 0.3s ease;
   border: 1px solid rgba(126, 100, 81, 0.1);
   text-align: center;
-  cursor: default;
+  position: relative;
+  overflow: hidden;
 }
 
-.rubric-item:hover {
+/* Clickable state ng card */
+.rubric-item.clickable {
+  cursor: pointer;
+}
+
+.rubric-item.clickable:hover {
   transform: translateY(-5px);
   box-shadow: 0 12px 28px rgba(80, 59, 47, 0.15);
-  border-color: rgba(217, 142, 139, 0.35);
+  border-color: rgba(217, 142, 139, 0.5);
+}
+
+.rubric-item.clickable:focus-visible {
+  outline: 2px solid var(--dusty-rose, #D98E8B);
+  outline-offset: 3px;
+}
+
+.rubric-item.clickable:active {
+  transform: translateY(-2px);
 }
 
 .rubric-icon {
@@ -94,7 +77,7 @@
   transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-.rubric-item:hover .rubric-icon {
+.rubric-item.clickable:hover .rubric-icon {
   transform: scale(1.15) rotate(-3deg);
 }
 
@@ -111,105 +94,294 @@
   line-height: 1.5;
   color: var(--secondary-brown);
   font-family: var(--font-body);
-  margin: 0;
+  margin: 0 0 14px 0;
 }
 
-/* Create Rubric Section */
-.create-rubric-section {
-  background: linear-gradient(135deg, var(--accent-blush) 0%, rgba(236, 199, 192, 0.5) 100%);
-  border-radius: 16px;
-  padding: 36px;
-  text-align: center;
-  box-shadow: 0 4px 16px rgba(80, 59, 47, 0.1);
-  border: 2px dashed rgba(80, 59, 47, 0.15);
-  transition: all 0.3s ease;
+/* Criteria breakdown pills — nakikita agad sa card */
+.rubric-criteria-pills {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+  margin-bottom: 12px;
 }
 
-.create-rubric-section:hover {
-  border-style: solid;
-  border-color: rgba(217, 142, 139, 0.4);
-  box-shadow: 0 8px 24px rgba(80, 59, 47, 0.12);
-}
-
-.create-rubric-section h3 {
-  font-size: 1.4rem;
-  font-weight: 600;
+.rubric-criteria-pill {
+  font-size: 0.75rem;
+  background-color: var(--accent-blush, #f5dbd8);
   color: var(--primary-cocoa);
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-family: var(--font-body);
+}
+
+.rubric-criteria-pill strong {
+  color: var(--dusty-rose, #D98E8B);
+  margin-left: 2px;
+}
+
+/* Total pts badge */
+.rubric-total-badge {
+  display: inline-block;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--secondary-brown);
+  background: rgba(126, 100, 81, 0.08);
+  border-radius: 20px;
+  padding: 4px 12px;
   margin-bottom: 10px;
-  font-family: var(--font-title);
-}
-
-.create-rubric-section p {
-  font-size: 0.95rem;
-  color: var(--secondary-brown);
-  margin-bottom: 22px;
   font-family: var(--font-body);
-  line-height: 1.5;
 }
 
-.create-btn {
-  background-color: var(--primary-cocoa);
-  color: white;
-  border: none;
-  border-radius: 12px;
-  padding: 14px 30px;
-  font-size: 1rem;
+/* Edit hint — lumalabas lang on hover */
+.rubric-edit-hint {
+  display: inline-block;
+  font-size: 0.8rem;
   font-weight: 600;
-  cursor: pointer;
+  color: var(--dusty-rose, #D98E8B);
+  opacity: 0;
+  transform: translateY(4px);
   transition: all 0.25s ease;
   font-family: var(--font-body);
-  box-shadow: 0 4px 14px rgba(80, 59, 47, 0.22);
 }
 
-.create-btn:hover {
-  background-color: var(--secondary-brown);
-  transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(80, 59, 47, 0.3);
+.rubric-item.clickable:hover .rubric-edit-hint {
+  opacity: 1;
+  transform: translateY(0);
 }
 
-.create-btn:active { transform: translateY(0); }
-
-/* Add Criterion Button */
-.add-criterion-btn {
-  background-color: transparent;
-  border: 2px dashed rgba(126, 100, 81, 0.5);
-  border-radius: 12px;
-  padding: 14px;
-  font-size: 14px;
-  color: var(--secondary-brown);
+/* Delete button — para sa custom rubrics lang */
+.rubric-delete-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: transparent;
+  border: none;
+  font-size: 0.75rem;
+  color: #c0605a;
   cursor: pointer;
-  transition: all 0.25s ease;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  width: 100%;
-  font-family: var(--font-body);
-  font-weight: 500;
+  opacity: 0;
+  transition: all 0.2s;
 }
 
-.add-criterion-btn:hover {
-  background-color: rgba(126, 100, 81, 0.08);
+/* Ipakita lang yung delete pag naka-hover sa card */
+.rubric-item:hover .rubric-delete-btn {
+  opacity: 1;
+  background: #fdecea;
+}
+
+.rubric-delete-btn:hover {
+  background: #e57373 !important;
+  color: white;
+}
+
+/* Add Essay Type card — yung special card sa dulo */
+.rubric-add-card {
+  border: 2px dashed rgba(126, 100, 81, 0.25);
+  background: rgba(236, 199, 192, 0.12);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+  transition: all 0.3s ease;
+}
+
+.rubric-add-card:hover {
   border-style: solid;
-  border-color: var(--dusty-rose);
+  border-color: rgba(217, 142, 139, 0.5);
+  background: rgba(236, 199, 192, 0.25);
+  transform: translateY(-5px);
+  box-shadow: 0 12px 28px rgba(80, 59, 47, 0.1);
+}
+
+.rubric-add-icon {
+  font-size: 2.5rem;
+  color: var(--dusty-rose, #D98E8B);
+  margin-bottom: 12px;
+  display: block;
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.rubric-add-card:hover .rubric-add-icon {
+  transform: scale(1.2) rotate(15deg);
+}
+
+.rubric-add-card h3 {
   color: var(--primary-cocoa);
-  transform: translateY(-2px);
+  margin-bottom: 8px;
 }
 
-.plus-icon {
-  font-size: 18px;
-  font-weight: bold;
-  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+.rubric-add-card p {
+  color: var(--secondary-brown);
+  font-size: 0.85rem;
+  margin: 0;
 }
 
-.add-criterion-btn:hover .plus-icon {
-  transform: rotate(90deg) scale(1.2);
+/* =====================
+   Modal — Add Essay Type
+   ===================== */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(80, 59, 47, 0.35);
+  backdrop-filter: blur(3px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  animation: fadeSlideIn 0.2s ease;
+}
+
+.modal-box {
+  background: #fff;
+  border-radius: 20px;
+  padding: 32px;
+  width: 100%;
+  max-width: 440px;
+  box-shadow: 0 20px 60px rgba(80, 59, 47, 0.2);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.modal-title {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--primary-cocoa);
+  font-family: var(--font-title);
+  margin: 0 0 4px 0;
+}
+
+.modal-label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--secondary-brown);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  font-family: var(--font-body);
+}
+
+.modal-optional {
+  font-weight: 400;
+  text-transform: none;
+  font-size: 0.75rem;
+  opacity: 0.7;
+}
+
+/* Icon picker buttons */
+.modal-icon-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.modal-icon-btn {
+  font-size: 1.4rem;
+  background: var(--accent-blush, #f5dbd8);
+  border: 2px solid transparent;
+  border-radius: 10px;
+  width: 42px;
+  height: 42px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-icon-btn:hover {
+  transform: scale(1.1);
+}
+
+/* Selected icon */
+.modal-icon-btn.active {
+  border-color: var(--dusty-rose, #D98E8B);
+  background: rgba(217, 142, 139, 0.15);
+}
+
+.modal-input {
+  padding: 10px 14px;
+  border: 1.5px solid var(--accent-blush, #f5dbd8);
+  border-radius: 10px;
+  font-size: 0.92rem;
+  font-family: var(--font-body);
+  color: var(--primary-cocoa);
+  background: #fafafa;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.modal-input:focus {
+  outline: none;
+  border-color: var(--dusty-rose, #D98E8B);
+  box-shadow: 0 0 0 3px rgba(217, 142, 139, 0.1);
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.modal-cancel-btn {
+  padding: 10px 18px;
+  background: transparent;
+  border: 2px solid var(--secondary-brown);
+  border-radius: 9px;
+  font-size: 0.88rem;
+  font-weight: 500;
+  color: var(--secondary-brown);
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: var(--font-body);
+}
+
+.modal-cancel-btn:hover {
+  background: var(--secondary-brown);
+  color: white;
+}
+
+.modal-create-btn {
+  padding: 10px 20px;
+  background: var(--primary-cocoa);
+  border: none;
+  border-radius: 9px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: var(--font-body);
+  box-shadow: 0 3px 10px rgba(80, 59, 47, 0.2);
+}
+
+.modal-create-btn:hover:not(:disabled) {
+  background: var(--secondary-brown);
+  transform: translateY(-1px);
+}
+
+/* Disabled pag walang title */
+.modal-create-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
 }
 
 /* Responsive */
 @media (max-width: 768px) {
-  .header-flex { flex-direction: column; align-items: flex-start; gap: 1rem; }
   .rubrics-grid { grid-template-columns: 1fr; gap: 16px; }
   .rubric-item { padding: 22px; }
-  .create-rubric-section { padding: 26px 18px; }
+  .rubric-edit-hint { opacity: 1; transform: translateY(0); }
+  .rubric-delete-btn { opacity: 1; }
+  .modal-box { margin: 16px; padding: 24px; }
 }

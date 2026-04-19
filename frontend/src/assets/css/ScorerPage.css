@@ -748,4 +748,10 @@
     font-size: 12px;
     right: 5px;
   }
+
+  .student-response-textarea.drag-active {
+  border-color: var(--accent-rose);
+  background-color: var(--accent-blush);
+  box-shadow: 0 0 0 3px rgba(217, 142, 139, 0.2);
+}
 }

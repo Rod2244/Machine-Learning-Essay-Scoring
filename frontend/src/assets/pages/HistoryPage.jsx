@@ -1,19 +1,486 @@
-import React from 'react';
+import React, { useState, useMemo } from 'react';
 import '../css/HistoryPage.css';
 
+const STATUSES = ['Graded', 'For Review', 'Returned'];
+
+// Dummy data — palitan ng real API call pag may backend na
+const INITIAL_ESSAYS = [
+  {
+    id: 1,
+    title: 'The Impact of Social Media on Youth',
+    student: 'Dennis Whitaker',
+    type: 'Argumentative Essay',
+    date: '2026-04-15',
+    totalScore: 88,
+    maxScore: 100,
+    status: 'Graded',
+    notes: '',
+    criteria: [
+      { name: 'Content & Ideas', score: 28, max: 30 },
+      { name: 'Organization', score: 22, max: 25 },
+      { name: 'Language & Style', score: 20, max: 25 },
+      { name: 'Grammar & Mechanics', score: 18, max: 20 },
+    ],
+  },
+  {
+    id: 2,
+    title: 'How Photosynthesis Works',
+    student: 'Trinity Santos',
+    type: 'Expository Essay',
+    date: '2026-04-14',
+    totalScore: 74,
+    maxScore: 100,
+    status: 'For Review',
+    notes: 'Needs stronger citations in the second paragraph.',
+    criteria: [
+      { name: 'Clarity', score: 22, max: 30 },
+      { name: 'Organization', score: 19, max: 25 },
+      { name: 'Research', score: 18, max: 25 },
+      { name: 'Grammar & Mechanics', score: 15, max: 20 },
+    ],
+  },
+  {
+    id: 3,
+    title: 'A Day I Will Never Forget',
+    student: 'Walter Hartwell White',
+    type: 'Narrative Essay',
+    date: '2026-04-13',
+    totalScore: 92,
+    maxScore: 100,
+    status: 'Returned',
+    notes: 'Outstanding work. Returned with commendation.',
+    criteria: [
+      { name: 'Storytelling', score: 28, max: 30 },
+      { name: 'Characters', score: 24, max: 25 },
+      { name: 'Engagement', score: 23, max: 25 },
+      { name: 'Language & Style', score: 17, max: 20 },
+    ],
+  },
+  {
+    id: 4,
+    title: 'Climate Change and Global Policy',
+    student: 'John Michael Carter',
+    type: 'Research Paper',
+    date: '2026-04-12',
+    totalScore: 65,
+    maxScore: 100,
+    status: 'For Review',
+    notes: '',
+    criteria: [
+      { name: 'Research Depth', score: 18, max: 30 },
+      { name: 'Citations', score: 16, max: 25 },
+      { name: 'Analysis', score: 16, max: 25 },
+      { name: 'Academic Rigor', score: 15, max: 20 },
+    ],
+  },
+  {
+    id: 5,
+    title: 'Why School Uniforms Should Be Abolished',
+    student: 'Skyler White',
+    type: 'Argumentative Essay',
+    date: '2026-04-11',
+    totalScore: 81,
+    maxScore: 100,
+    status: 'Graded',
+    notes: '',
+    criteria: [
+      { name: 'Content & Ideas', score: 25, max: 30 },
+      { name: 'Organization', score: 21, max: 25 },
+      { name: 'Language & Style', score: 20, max: 25 },
+      { name: 'Grammar & Mechanics', score: 15, max: 20 },
+    ],
+  },
+  {
+    id: 6,
+    title: 'The Process of Making Bread',
+    student: 'Peeta Mellark',
+    type: 'Expository Essay',
+    date: '2026-04-10',
+    totalScore: 57,
+    maxScore: 100,
+    status: 'Returned',
+    notes: 'Returned for revision. Organization needs improvement.',
+    criteria: [
+      { name: 'Clarity', score: 15, max: 30 },
+      { name: 'Organization', score: 14, max: 25 },
+      { name: 'Research', score: 15, max: 25 },
+      { name: 'Grammar & Mechanics', score: 13, max: 20 },
+    ],
+  },
+];
+
+const ESSAY_TYPES = ['All Types', 'Argumentative Essay', 'Expository Essay', 'Narrative Essay', 'Research Paper'];
+
+const getScoreColor = (score) => {
+  if (score >= 90) return 'score-excellent';
+  if (score >= 75) return 'score-good';
+  if (score >= 60) return 'score-average';
+  return 'score-poor';
+};
+
+const getScoreLabel = (score) => {
+  if (score >= 90) return 'Excellent';
+  if (score >= 75) return 'Good';
+  if (score >= 60) return 'Average';
+  return 'Needs Work';
+};
+
 const HistoryPage = () => {
+  const [essays, setEssays] = useState(INITIAL_ESSAYS);
+
+  // Filters
+  const [filterType, setFilterType] = useState('All Types');
+  const [filterDate, setFilterDate] = useState('');
+  const [search, setSearch] = useState('');
+
+  // Sorting — column + direction
+  const [sortCol, setSortCol] = useState('date');
+  const [sortDir, setSortDir] = useState('desc');
+
+  // Checkboxes for bulk actions
+  const [selected, setSelected] = useState([]);
+
+  // Modals
+  const [viewEssay, setViewEssay] = useState(null);
+  const [regradeEssay, setRegradeEssay] = useState(null);
+  const [notesEssay, setNotesEssay] = useState(null);
+  const [notesInput, setNotesInput] = useState('');
+
+  // Filter + search + sort
+  const filtered = useMemo(() => {
+    let list = essays.filter(e => {
+      const matchType = filterType === 'All Types' || e.type === filterType;
+      const matchDate = !filterDate || e.date === filterDate;
+      const matchSearch = !search ||
+        e.title.toLowerCase().includes(search.toLowerCase()) ||
+        e.student.toLowerCase().includes(search.toLowerCase());
+      return matchType && matchDate && matchSearch;
+    });
+
+    // Sort logic
+    list = [...list].sort((a, b) => {
+      let aVal, bVal;
+      if (sortCol === 'date') { aVal = a.date; bVal = b.date; }
+      else if (sortCol === 'score') { aVal = a.totalScore; bVal = b.totalScore; }
+      else if (sortCol === 'student') { aVal = a.student; bVal = b.student; }
+      else if (sortCol === 'status') { aVal = a.status; bVal = b.status; }
+      if (aVal < bVal) return sortDir === 'asc' ? -1 : 1;
+      if (aVal > bVal) return sortDir === 'asc' ? 1 : -1;
+      return 0;
+    });
+
+    return list;
+  }, [essays, filterType, filterDate, search, sortCol, sortDir]);
+
+  // Toggle sort column
+  const handleSort = (col) => {
+    if (sortCol === col) setSortDir(d => d === 'asc' ? 'desc' : 'asc');
+    else { setSortCol(col); setSortDir('asc'); }
+  };
+
+  const sortIcon = (col) => {
+    if (sortCol !== col) return <span className="sort-icon inactive">↕</span>;
+    return <span className="sort-icon active">{sortDir === 'asc' ? '↑' : '↓'}</span>;
+  };
+
+  // Checkbox logic
+  const allChecked = filtered.length > 0 && filtered.every(e => selected.includes(e.id));
+  const toggleAll = () => setSelected(allChecked ? [] : filtered.map(e => e.id));
+  const toggleOne = (id) => setSelected(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+
+  // Bulk delete
+  const handleBulkDelete = () => {
+    setEssays(prev => prev.filter(e => !selected.includes(e.id)));
+    setSelected([]);
+  };
+
+  // Status change
+  const handleStatusChange = (id, status) => {
+    setEssays(prev => prev.map(e => e.id === id ? { ...e, status } : e));
+  };
+
+  // Save notes
+  const handleSaveNotes = () => {
+    setEssays(prev => prev.map(e => e.id === notesEssay.id ? { ...e, notes: notesInput } : e));
+    setNotesEssay(null);
+  };
+
+  // Re-grade: bump scores by small random delta (mock — sa real app, magbubukas ng grading form)
+  const handleRegrade = (essay) => {
+    setRegradeEssay(essay);
+  };
+
+  const confirmRegrade = () => {
+    // Mock re-grade — just marks it as For Review para sa demo
+    setEssays(prev => prev.map(e =>
+      e.id === regradeEssay.id ? { ...e, status: 'For Review' } : e
+    ));
+    setRegradeEssay(null);
+  };
+
   return (
     <div className="page-content">
       <div className="page-header">
         <h2>Essay History</h2>
-        <p>View and analyze previously graded essays and their evaluation results</p>
+        <p>View and manage previously graded essays</p>
       </div>
 
-      <div className="empty-state">
-        <div className="empty-icon">📚</div>
-        <h3>No Essay History Yet</h3>
-        <p>Start grading essays to see your evaluation history and analytics here.</p>
+      {/* Search + Filters row */}
+      <div className="history-toolbar">
+        {/* Search bar */}
+        <div className="search-wrap">
+          <span className="search-icon">🔍</span>
+          <input
+            className="search-input"
+            placeholder="Search by title or student..."
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+          />
+          {search && (
+            <button className="search-clear" onClick={() => setSearch('')}>✕</button>
+          )}
+        </div>
+
+        {/* Filters */}
+        <div className="filter-group">
+          <label className="filter-label">Type</label>
+          <select className="filter-select" value={filterType} onChange={e => setFilterType(e.target.value)}>
+            {ESSAY_TYPES.map(t => <option key={t}>{t}</option>)}
+          </select>
+        </div>
+        <div className="filter-group">
+          <label className="filter-label">Date</label>
+          <input type="date" className="filter-select" value={filterDate} onChange={e => setFilterDate(e.target.value)} />
+        </div>
+        {(filterType !== 'All Types' || filterDate) && (
+          <button className="filter-reset-btn" onClick={() => { setFilterType('All Types'); setFilterDate(''); }}>
+            ✕ Clear
+          </button>
+        )}
+
+        <span className="filter-count">{filtered.length} result{filtered.length !== 1 ? 's' : ''}</span>
       </div>
+
+      {/* Bulk action bar — lumalabas pag may selected */}
+      {selected.length > 0 && (
+        <div className="bulk-bar">
+          <span className="bulk-count">{selected.length} selected</span>
+          <button className="bulk-delete-btn" onClick={handleBulkDelete}>🗑 Delete Selected</button>
+          <button className="bulk-clear-btn" onClick={() => setSelected([])}>✕ Cancel</button>
+        </div>
+      )}
+
+      {/* Table */}
+      <div className="history-table-container">
+        <div className="table-header-accent" />
+        {filtered.length === 0 ? (
+          <div className="empty-state">
+            <div className="empty-icon">🔍</div>
+            <h3>No Results Found</h3>
+            <p>Try adjusting your filters or search query.</p>
+          </div>
+        ) : (
+          <table className="history-table">
+            <colgroup>
+              <col />{/* checkbox */}
+              <col />{/* title */}
+              <col />{/* student */}
+              <col />{/* type */}
+              <col />{/* date */}
+              <col />{/* score */}
+              <col />{/* remarks */}
+              <col />{/* status */}
+              <col />{/* actions */}
+            </colgroup>
+            <thead>
+              <tr>
+                {/* Select all checkbox */}
+                <th className="th-check">
+                  <input type="checkbox" checked={allChecked} onChange={toggleAll} />
+                </th>
+                <th>Essay Title</th>
+                <th className="th-sortable" onClick={() => handleSort('student')}>
+                  Student {sortIcon('student')}
+                </th>
+                <th>Type</th>
+                <th className="th-sortable" onClick={() => handleSort('date')}>
+                  Date {sortIcon('date')}
+                </th>
+                <th className="th-sortable" onClick={() => handleSort('score')}>
+                  Score {sortIcon('score')}
+                </th>
+                <th>Remarks</th>
+                <th className="th-sortable" onClick={() => handleSort('status')}>
+                  Status {sortIcon('status')}
+                </th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filtered.map((essay, i) => (
+                <tr
+                  key={essay.id}
+                  className={selected.includes(essay.id) ? 'row-selected' : ''}
+                  style={{ animationDelay: `${i * 0.04}s` }}
+                >
+                  <td className="td-check">
+                    <input
+                      type="checkbox"
+                      checked={selected.includes(essay.id)}
+                      onChange={() => toggleOne(essay.id)}
+                    />
+                  </td>
+                  <td className="essay-title-cell">
+                    {essay.title}
+                    {/* Notes indicator — may note icon pag may laman */}
+                    {essay.notes && <span className="notes-indicator" title={essay.notes}>💬</span>}
+                  </td>
+                  <td className="essay-student-cell">
+                    <span className="student-avatar">
+                      {essay.student.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                    </span>
+                    <span>{essay.student}</span>
+                  </td>
+                  <td>
+                    <span className="essay-type-badge">{essay.type}</span>
+                  </td>
+                  <td className="essay-date-cell">
+                    {new Date(essay.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                  </td>
+                  <td>
+                    <span className={`score-badge ${getScoreColor(essay.totalScore)}`}>
+                      {essay.totalScore}/{essay.maxScore}
+                    </span>
+                  </td>
+                  <td>
+                    <span className={`remarks-badge ${getScoreColor(essay.totalScore)}`}>
+                      {getScoreLabel(essay.totalScore)}
+                    </span>
+                  </td>
+                  <td>
+                    {/* Status dropdown — inline change */}
+                    <select
+                      className={`status-select status-${essay.status.replace(' ', '-').toLowerCase()}`}
+                      value={essay.status}
+                      onChange={e => handleStatusChange(essay.id, e.target.value)}
+                    >
+                      {STATUSES.map(s => <option key={s}>{s}</option>)}
+                    </select>
+                  </td>
+                  <td>
+                    <div className="action-btns">
+                      <button className="action-btn view-btn" onClick={() => setViewEssay(essay)} title="View breakdown">
+                        👁
+                      </button>
+                      <button className="action-btn regrade-btn" onClick={() => handleRegrade(essay)} title="Re-grade">
+                        ✏️
+                      </button>
+                      <button
+                        className="action-btn notes-btn"
+                        onClick={() => { setNotesEssay(essay); setNotesInput(essay.notes); }}
+                        title="Add notes"
+                      >
+                        💬
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+
+      {/* Score Breakdown Modal */}
+      {viewEssay && (
+        <div className="modal-overlay" onClick={() => setViewEssay(null)}>
+          <div className="breakdown-modal" onClick={e => e.stopPropagation()}>
+            <div className="breakdown-header">
+              <div>
+                <h3 className="breakdown-title">{viewEssay.title}</h3>
+                <p className="breakdown-meta">{viewEssay.student} · {viewEssay.type}</p>
+              </div>
+              <button className="breakdown-close" onClick={() => setViewEssay(null)}>✕</button>
+            </div>
+            <div className="breakdown-overall">
+              <span className={`breakdown-score ${getScoreColor(viewEssay.totalScore)}`}>
+                {viewEssay.totalScore}
+              </span>
+              <span className="breakdown-max">/ {viewEssay.maxScore}</span>
+              <span className={`breakdown-label ${getScoreColor(viewEssay.totalScore)}`}>
+                {getScoreLabel(viewEssay.totalScore)}
+              </span>
+            </div>
+            <p className="breakdown-section-title">Score Breakdown</p>
+            <div className="breakdown-criteria">
+              {viewEssay.criteria.map((c, i) => {
+                const pct = Math.round((c.score / c.max) * 100);
+                return (
+                  <div key={i} className="breakdown-criterion">
+                    <div className="breakdown-criterion-top">
+                      <span className="breakdown-criterion-name">{c.name}</span>
+                      <span className="breakdown-criterion-score">{c.score}/{c.max}</span>
+                    </div>
+                    <div className="breakdown-bar-track">
+                      <div className={`breakdown-bar-fill ${getScoreColor(pct)}`} style={{ width: `${pct}%` }} />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            {/* Show notes if may laman */}
+            {viewEssay.notes && (
+              <div className="breakdown-notes">
+                <p className="breakdown-section-title">Teacher Notes</p>
+                <p className="breakdown-notes-text">{viewEssay.notes}</p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Re-grade Confirmation Modal */}
+      {regradeEssay && (
+        <div className="modal-overlay" onClick={() => setRegradeEssay(null)}>
+          <div className="confirm-modal" onClick={e => e.stopPropagation()}>
+            <h3 className="confirm-title">Re-grade Essay?</h3>
+            <p className="confirm-body">
+              <strong>{regradeEssay.title}</strong> by {regradeEssay.student} will be opened for re-grading.
+              The status will be set to "For Review".
+            </p>
+            <div className="confirm-footer">
+              <button className="modal-cancel-btn" onClick={() => setRegradeEssay(null)}>Cancel</button>
+              <button className="modal-confirm-btn" onClick={confirmRegrade}>Yes, Re-grade</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Notes Modal */}
+      {notesEssay && (
+        <div className="modal-overlay" onClick={() => setNotesEssay(null)}>
+          <div className="notes-modal" onClick={e => e.stopPropagation()}>
+            <div className="breakdown-header">
+              <div>
+                <h3 className="breakdown-title">Teacher Notes</h3>
+                <p className="breakdown-meta">{notesEssay.title}</p>
+              </div>
+              <button className="breakdown-close" onClick={() => setNotesEssay(null)}>✕</button>
+            </div>
+            <textarea
+              className="notes-textarea"
+              placeholder="Add private notes about this essay..."
+              value={notesInput}
+              onChange={e => setNotesInput(e.target.value)}
+              rows={5}
+            />
+            <div className="confirm-footer">
+              <button className="modal-cancel-btn" onClick={() => setNotesEssay(null)}>Cancel</button>
+              <button className="modal-confirm-btn" onClick={handleSaveNotes}>Save Notes</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

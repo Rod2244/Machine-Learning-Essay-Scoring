@@ -77,12 +77,47 @@
   to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
+/* Back Button */
+.login-back-btn {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  background: transparent;
+  color: var(--primary-cocoa);
+  border: 2px solid var(--primary-cocoa);
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 500;
+  font-family: var(--font-title);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-decoration: none;
+  min-width: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+}
+
+.login-back-btn:hover {
+  background: var(--primary-cocoa);
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(80, 59, 47, 0.3);
+}
+
+.login-back-btn:active {
+  transform: translateY(0);
+}
+
 /* Brand */
 .login-brand {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 10px;
+  margin-top: 50px;
   margin-bottom: 28px;
 }
 
@@ -233,21 +268,36 @@
   padding-right: 44px;
 }
 
+/* Hide browser password reveal icons */
+.password-wrapper input[type="password"]::-webkit-credentials-auto-fill-button,
+.password-wrapper input[type="password"]::-webkit-caps-lock-indicator,
+.password-wrapper input[type="password"]::-webkit-reveal-password {
+  display: none !important;
+}
+
+.password-wrapper input[type="password"]::-ms-reveal,
+.password-wrapper input[type="password"]::-ms-clear {
+  display: none !important;
+}
+
 .show-password-btn {
   position: absolute;
   right: 10px;
   background: none;
   border: none;
   cursor: pointer;
-  font-size: 16px;
   padding: 4px;
   border-radius: 6px;
   transition: transform 0.2s ease;
-  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--secondary-brown);
 }
 
 .show-password-btn:hover {
   transform: scale(1.15);
+  color: var(--primary-cocoa);
 }
 
 /* Forgot password */
@@ -374,12 +424,160 @@
 }
 
 /* Responsive */
-@media (max-width: 480px) {
+@media (max-width: 768px) {
   .login-card {
-    padding: 32px 24px;
-    border-radius: 20px;
+    padding: 40px 32px;
+    border-radius: 22px;
+    max-width: 95%;
   }
 
-  .login-logo-text { font-size: 22px; }
-  .login-logo-icon { font-size: 26px; }
+  .login-logo-text { font-size: 24px; }
+  .login-logo-icon { font-size: 28px; }
+  
+  .login-back-btn {
+    padding: 7px 14px;
+    font-size: 13px;
+    min-width: 75px;
+    top: 18px;
+    left: 18px;
+  }
+
+  .form-input {
+    font-size: 0.9rem;
+    padding: 11px 14px;
+  }
+
+  .form-label {
+    font-size: 0.78rem;
+  }
+
+  .toggle-btn {
+    font-size: 13px;
+    padding: 8px 14px;
+  }
+
+  .login-subtitle {
+    font-size: 0.84rem;
+  }
+
+  .submit-btn {
+    font-size: 0.95rem;
+    padding: 13px;
+  }
+}
+
+@media (max-width: 480px) {
+  .login-card {
+    padding: 28px 20px;
+    border-radius: 18px;
+    max-width: 92%;
+  }
+
+  .login-logo-text { font-size: 20px; }
+  .login-logo-icon { font-size: 24px; }
+  
+  .login-back-btn {
+    padding: 5px 10px;
+    font-size: 12px;
+    min-width: 65px;
+    top: 12px;
+    left: 12px;
+  }
+
+  .form-input {
+    font-size: 0.85rem;
+    padding: 10px 12px;
+  }
+
+  .form-label {
+    font-size: 0.75rem;
+  }
+
+  .toggle-btn {
+    font-size: 12px;
+    padding: 7px 12px;
+  }
+
+  .login-subtitle {
+    font-size: 0.8rem;
+  }
+
+  .submit-btn {
+    font-size: 0.9rem;
+    padding: 12px;
+  }
+
+  .error-msg {
+    font-size: 0.74rem;
+  }
+
+  .switch-prompt {
+    font-size: 0.84rem;
+  }
+
+  .switch-btn {
+    font-size: 0.84rem;
+  }
+
+  .forgot-btn {
+    font-size: 0.78rem;
+  }
+}
+
+@media (max-width: 360px) {
+  .login-card {
+    padding: 24px 16px;
+    border-radius: 16px;
+    max-width: 90%;
+  }
+
+  .login-logo-text { font-size: 18px; }
+  .login-logo-icon { font-size: 22px; }
+  
+  .login-back-btn {
+    padding: 4px 8px;
+    font-size: 11px;
+    min-width: 60px;
+    top: 10px;
+    left: 10px;
+  }
+
+  .form-input {
+    font-size: 0.8rem;
+    padding: 9px 11px;
+  }
+
+  .form-label {
+    font-size: 0.72rem;
+  }
+
+  .toggle-btn {
+    font-size: 11px;
+    padding: 6px 10px;
+  }
+
+  .login-subtitle {
+    font-size: 0.76rem;
+  }
+
+  .submit-btn {
+    font-size: 0.85rem;
+    padding: 11px;
+  }
+
+  .error-msg {
+    font-size: 0.7rem;
+  }
+
+  .switch-prompt {
+    font-size: 0.8rem;
+  }
+
+  .switch-btn {
+    font-size: 0.8rem;
+  }
+
+  .forgot-btn {
+    font-size: 0.74rem;
+  }
 }

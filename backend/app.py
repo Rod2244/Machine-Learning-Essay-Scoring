@@ -8,36 +8,33 @@ import sys
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import traceback
+from dotenv import load_dotenv
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
+load_dotenv()
 from config import config
-from scripts.train_model import EssayScorer
+from ocr_service import extract_text_from_image
+from scoring_service import scoring_service
 
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS for React frontend
 
-# Load trained model
-MODEL_PATH = os.path.join(config.MODELS_DIR, 'essay_scorer.pkl')
-scorer = None
+# Load trained model (handled by scoring_service)
+# MODEL_PATH = os.path.join(config.MODELS_DIR, 'essay_scorer.pkl')
+# scorer = None
 
 
 def load_model():
     """Load the trained model on startup"""
-    global scorer
-    
-    if not os.path.exists(MODEL_PATH):
-        print(f"❌ Model not found at {MODEL_PATH}")
-        print("Please run: python scripts/train_model.py")
-        return False
-    
-    try:
-        scorer = EssayScorer.load(MODEL_PATH)
+    # Model loading is now handled by scoring_service
+    if scoring_service.scorer is not None:
         print("✓ Model loaded successfully")
         return True
-    except Exception as e:
-        print(f"❌ Error loading model: {e}")
+    else:
+        print("❌ Model not loaded")
+        print("Please run: python scripts/train_model.py")
         return False
 
 
@@ -106,8 +103,66 @@ def health():
     """Health check endpoint"""
     return jsonify({
         'status': 'ok',
-        'model_loaded': scorer is not None
+        'model_loaded': scoring_service.scorer is not None
     }), 200
+
+
+@app.route('/api/ocr-extract', methods=['POST'])
+def ocr_extract():
+    """
+    Extract text from uploaded image using Google Cloud Vision
+    
+    Request: multipart/form-data with 'file' field
+    Response: {
+        "success": true,
+        "extracted_text": "Extracted text from image"
+    }
+    """
+    if 'file' not in request.files:
+        return jsonify({
+            "success": False, 
+            "error": "No file uploaded"
+        }), 400
+    
+    file = request.files['file']
+    
+    if file.filename == '':
+        return jsonify({
+            "success": False, 
+            "error": "No file selected"
+        }), 400
+    
+    # Check if file is an image or PDF
+    if not (file.content_type.startswith('image/') or file.content_type == 'application/pdf'):
+        return jsonify({
+            "success": False, 
+            "error": "File must be an image (JPG, PNG) or PDF"
+        }), 400
+    
+    try:
+        # Read the file into bytes
+        img_bytes = file.read()
+        
+        # Call OCR service
+        extracted_text = extract_text_from_image(img_bytes, file.filename)
+        
+        if extracted_text:
+            return jsonify({
+                "success": True, 
+                "extracted_text": extracted_text
+            }), 200
+        else:
+            return jsonify({
+                "success": False, 
+                "error": "Could not read text from image. Please try a clearer photo."
+            }), 500
+            
+    except Exception as e:
+        print(f"OCR Error: {e}")
+        return jsonify({
+            "success": False, 
+            "error": "OCR processing failed. Please try again."
+        }), 500
 
 
 @app.route('/api/score', methods=['POST'])
@@ -138,7 +193,7 @@ def score_essay():
     }
     """
     
-    if scorer is None:
+    if scoring_service.scorer is None:
         return jsonify({
             'success': False,
             'error': 'Model not loaded. Please restart the server.'
@@ -162,34 +217,16 @@ def score_essay():
                 'error': 'Essay too short. Minimum 10 characters required.'
             }), 400
         
-        # Get prediction
-        prediction = scorer.predict(essay_text)
+        # Get prediction using scoring service
+        result = scoring_service.score_essay(essay_text, data.get('prompt', ''), rubric_id)
         
-        # Get rubric-specific breakdown
-        total_score = prediction['score']
-        breakdown = get_rubric_breakdown(total_score, rubric_id)
+        if not result['success']:
+            return jsonify(result), 500
         
-        # Generate feedback
-        confidence = prediction['confidence']
-        if total_score >= 80:
-            feedback = "Excellent essay! Strong arguments and clear structure."
-        elif total_score >= 60:
-            feedback = "Good essay. Consider improving organization and evidence support."
-        elif total_score >= 40:
-            feedback = "Fair essay. Work on thesis clarity and argument development."
-        else:
-            feedback = "Essay needs significant improvement in structure and argumentation."
+        prediction = result
         
-        return jsonify({
-            'success': True,
-            'score': prediction['score'],
-            'category': prediction['category'],
-            'confidence': prediction['confidence'],
-            'breakdown': breakdown,
-            'feedback': feedback,
-            'rubric_used': rubric_id,
-            'probabilities': prediction['probabilities']
-        }), 200
+        # Use the result from scoring service
+        return jsonify(result), 200
         
     except Exception as e:
         print(f"Error scoring essay: {e}")
@@ -214,7 +251,7 @@ def batch_score():
     }
     """
     
-    if scorer is None:
+    if scoring_service.scorer is None:
         return jsonify({
             'success': False,
             'error': 'Model not loaded'
@@ -234,11 +271,14 @@ def batch_score():
         for essay in essays:
             response = essay.get('response', '').strip()
             if len(response) >= 10:
-                prediction = scorer.predict(response)
-                results.append({
-                    'score': prediction['score'],
-                    'confidence': prediction['confidence']
-                })
+                result = scoring_service.score_essay(response)
+                if result['success']:
+                    results.append({
+                        'score': result['score'],
+                        'confidence': result['confidence']
+                    })
+                else:
+                    results.append({'error': 'Scoring failed'})
             else:
                 results.append({'error': 'Essay too short'})
         
@@ -384,6 +424,7 @@ if __name__ == '__main__':
         print("\nAvailable endpoints:")
         print("  POST /api/score - Score a single essay")
         print("  POST /api/batch-score - Score multiple essays")
+        print("  POST /api/ocr-extract - Extract text from image")
         print("  GET  /api/rubrics - Get available rubrics")
         print("  GET  /health - Health check")
         print("\nPress Ctrl+C to stop")

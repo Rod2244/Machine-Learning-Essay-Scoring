@@ -19,6 +19,9 @@ const ScorerPage = () => {
   const [selectedRubricId, setSelectedRubricId] = useState(1);
   const [loadingRubrics, setLoadingRubrics] = useState(true);
 
+  // File Upload
+  const fileInputRef = React.useRef(null);
+
   // Load available rubrics from backend on component mount
   useEffect(() => {
     const loadRubrics = async () => {
@@ -51,6 +54,45 @@ const ScorerPage = () => {
     setStudentResponse("");
     setScoringResult(null);
     setError(null);
+  };
+
+  // File Upload Handler
+  const handleFileUpload = async (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    // UI/UX: Clear previous errors and show loading
+    setIsLoading(true);
+    setError(null);
+    
+    // Optional: Give the user feedback that the AI is working
+    const originalPlaceholder = "AI is transcribing your photo...";
+    setStudentResponse(originalPlaceholder);
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+      const response = await fetch(`${apiUrl}/api/ocr-extract`, {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await response.json();
+      
+      if (data.success) {
+        setStudentResponse(data.extracted_text);
+        console.log("✓ OCR Success!");
+      } else {
+        setStudentResponse(""); // Clear the placeholder
+        setError(data.error || "OCR failed to recognize text.");
+      }
+    } catch (err) {
+      setStudentResponse(""); 
+      setError("Failed to connect to OCR service. Check your backend.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   // Score essay using ML backend
@@ -149,38 +191,61 @@ const ScorerPage = () => {
               </div>
             </div>
 
-            {/* Student Response Section */}
-            <div className="input-section">
-              <div className="section-label">Student Response</div>
-              <textarea
-                className={`student-response-textarea ${dragActive ? "drag-active" : ""}`}
-                placeholder="Enter student response here or drag & drop a file..."
-                value={studentResponse}
-                onChange={(e) => setStudentResponse(e.target.value)}
-                onDragOver={(e) => {
-                  e.preventDefault();
-                  setDragActive(true);
-                }}
-                onDragLeave={() => setDragActive(false)}
-                onDrop={(e) => {
-                  e.preventDefault();
-                  setDragActive(false);
-
-                  const file = e.dataTransfer.files[0];
-                  if (!file) return;
-
-                  if (file.type === "text/plain") {
-                    const reader = new FileReader();
-                    reader.onload = (event) => {
-                      setStudentResponse(event.target.result);
-                    };
-                    reader.readAsText(file);
-                  } else {
-                    setStudentResponse(`[Attached File]: ${file.name}`);
-                  }
-                }}
-              />
+          {/* Updated Student Response Section */}
+          <div className="input-section">
+            <div className="section-label" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span>Student Response</span>
+              <div className="ocr-buttons">
+                <button 
+                  type="button" 
+                  className="ocr-btn" 
+                  onClick={() => {
+                    if (fileInputRef.current) {
+                      fileInputRef.current.click();
+                    } else {
+                      console.error("File input ref is null");
+                    }
+                  }}
+                  disabled={isLoading}
+                >
+                  📷 Upload File/Photo/PDF
+                </button>
+              </div>
             </div>
+            
+            <input 
+              type="file" 
+              ref={fileInputRef} 
+              style={{display: 'none'}} 
+              accept="image/*,.pdf" 
+              onChange={handleFileUpload} 
+            />
+            
+            <textarea
+              className={`student-response-textarea ${dragActive ? "drag-active" : ""}`}
+              placeholder="Enter student response here or drag & drop a file..."
+              value={studentResponse}
+              onChange={(e) => setStudentResponse(e.target.value)}
+              onDragOver={(e) => { e.preventDefault(); setDragActive(true); }}
+              onDragLeave={() => setDragActive(false)}
+              onDrop={(e) => {
+                e.preventDefault();
+                setDragActive(false);
+                const file = e.dataTransfer.files[0];
+                if (!file) return;
+
+                // UX Improvement: If they drop an image, trigger OCR automatically!
+                if (file.type.startsWith("image/")) {
+                  const fakeEvent = { target: { files: [file] } };
+                  handleFileUpload(fakeEvent);
+                } else if (file.type === "text/plain") {
+                  const reader = new FileReader();
+                  reader.onload = (event) => setStudentResponse(event.target.result);
+                  reader.readAsText(file);
+                }
+              }}
+            />
+          </div>
 
             {/* Bottom Buttons */}
             <div className="button-group">
@@ -271,7 +336,7 @@ const ScorerPage = () => {
                 {selectedRubric &&
                   selectedRubric.criteria.map((criterion, idx) => {
                     const score =
-                      scoringResult.breakdown[criterion.name.toLowerCase()] ||
+                      scoringResult.breakdown[criterion.name] ||
                       0;
                     return (
                       <div className="rubric-card" key={idx}>

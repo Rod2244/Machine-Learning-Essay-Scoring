@@ -335,9 +335,33 @@ const ScorerPage = () => {
               <div className="rubric-cards">
                 {selectedRubric &&
                   selectedRubric.criteria.map((criterion, idx) => {
-                    const score =
-                      scoringResult.breakdown[criterion.name] ||
-                      0;
+                    // Debug: log the entire scoring result
+                    console.log('Full scoring result:', scoringResult);
+                    console.log('Breakdown:', scoringResult.data?.breakdown);
+                    console.log('Criterion name:', criterion.name);
+                    
+                    // Safe check for breakdown
+                    if (!scoringResult.data?.breakdown) {
+                      console.warn('No breakdown found in scoring result');
+                      return null; // Skip this criterion
+                    }
+                    
+                    // Try multiple possible key formats
+                    const possibleKeys = [
+                      criterion.name,
+                      criterion.name.toLowerCase(),
+                      criterion.name.toUpperCase(),
+                      criterion.name.replace(/\s+/g, '_'),
+                      criterion.name.replace(/\s+/g, '').toLowerCase()
+                    ];
+                    
+                    let score = 0;
+                    for (const key of possibleKeys) {
+                      if (scoringResult.data.breakdown[key] !== undefined) {
+                        score = scoringResult.data.breakdown[key];
+                        break;
+                      }
+                    }
                     return (
                       <div className="rubric-card" key={idx}>
                         <h4>{criterion.name}</h4>
@@ -363,23 +387,23 @@ const ScorerPage = () => {
                 <h4>Total Score</h4>
                 <div className="total-score-display">
                   <span className="total-score-value">
-                    {scoringResult.score}
+                    {scoringResult.data?.total_score || 0}
                   </span>
                   <span className="total-score-max">/100</span>
                 </div>
                 <div className="confidence-meter">
                   <p className="confidence-label">
-                    AI Confidence: {(scoringResult.confidence * 100).toFixed(1)}
+                    AI Confidence: {((scoringResult.data?.confidence || 0) * 100).toFixed(1)}
                     %
                   </p>
                   <div className="confidence-bar">
                     <div
                       className="confidence-fill"
-                      style={{ width: `${scoringResult.confidence * 100}%` }}
+                      style={{ width: `${(scoringResult.data?.confidence || 0) * 100}%` }}
                     />
                   </div>
                 </div>
-                <p className="overall-feedback">{scoringResult.feedback}</p>
+                <p className="overall-feedback">{scoringResult.data?.feedback || ''}</p>
               </div>
             </>
           )}

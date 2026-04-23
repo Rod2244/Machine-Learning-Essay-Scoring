@@ -1,113 +1,7 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import '../css/HistoryPage.css';
 
 const STATUSES = ['Graded', 'For Review', 'Returned'];
-
-// Dummy data — palitan ng real API call pag may backend na
-const INITIAL_ESSAYS = [
-  {
-    id: 1,
-    title: 'The Impact of Social Media on Youth',
-    student: 'Dennis Whitaker',
-    type: 'Argumentative Essay',
-    date: '2026-04-15',
-    totalScore: 88,
-    maxScore: 100,
-    status: 'Graded',
-    notes: '',
-    criteria: [
-      { name: 'Content & Ideas', score: 28, max: 30 },
-      { name: 'Organization', score: 22, max: 25 },
-      { name: 'Language & Style', score: 20, max: 25 },
-      { name: 'Grammar & Mechanics', score: 18, max: 20 },
-    ],
-  },
-  {
-    id: 2,
-    title: 'How Photosynthesis Works',
-    student: 'Trinity Santos',
-    type: 'Expository Essay',
-    date: '2026-04-14',
-    totalScore: 74,
-    maxScore: 100,
-    status: 'For Review',
-    notes: 'Needs stronger citations in the second paragraph.',
-    criteria: [
-      { name: 'Clarity', score: 22, max: 30 },
-      { name: 'Organization', score: 19, max: 25 },
-      { name: 'Research', score: 18, max: 25 },
-      { name: 'Grammar & Mechanics', score: 15, max: 20 },
-    ],
-  },
-  {
-    id: 3,
-    title: 'A Day I Will Never Forget',
-    student: 'Walter Hartwell White',
-    type: 'Narrative Essay',
-    date: '2026-04-13',
-    totalScore: 92,
-    maxScore: 100,
-    status: 'Returned',
-    notes: 'Outstanding work. Returned with commendation.',
-    criteria: [
-      { name: 'Storytelling', score: 28, max: 30 },
-      { name: 'Characters', score: 24, max: 25 },
-      { name: 'Engagement', score: 23, max: 25 },
-      { name: 'Language & Style', score: 17, max: 20 },
-    ],
-  },
-  {
-    id: 4,
-    title: 'Climate Change and Global Policy',
-    student: 'John Michael Carter',
-    type: 'Research Paper',
-    date: '2026-04-12',
-    totalScore: 65,
-    maxScore: 100,
-    status: 'For Review',
-    notes: '',
-    criteria: [
-      { name: 'Research Depth', score: 18, max: 30 },
-      { name: 'Citations', score: 16, max: 25 },
-      { name: 'Analysis', score: 16, max: 25 },
-      { name: 'Academic Rigor', score: 15, max: 20 },
-    ],
-  },
-  {
-    id: 5,
-    title: 'Why School Uniforms Should Be Abolished',
-    student: 'Skyler White',
-    type: 'Argumentative Essay',
-    date: '2026-04-11',
-    totalScore: 81,
-    maxScore: 100,
-    status: 'Graded',
-    notes: '',
-    criteria: [
-      { name: 'Content & Ideas', score: 25, max: 30 },
-      { name: 'Organization', score: 21, max: 25 },
-      { name: 'Language & Style', score: 20, max: 25 },
-      { name: 'Grammar & Mechanics', score: 15, max: 20 },
-    ],
-  },
-  {
-    id: 6,
-    title: 'The Process of Making Bread',
-    student: 'Peeta Mellark',
-    type: 'Expository Essay',
-    date: '2026-04-10',
-    totalScore: 57,
-    maxScore: 100,
-    status: 'Returned',
-    notes: 'Returned for revision. Organization needs improvement.',
-    criteria: [
-      { name: 'Clarity', score: 15, max: 30 },
-      { name: 'Organization', score: 14, max: 25 },
-      { name: 'Research', score: 15, max: 25 },
-      { name: 'Grammar & Mechanics', score: 13, max: 20 },
-    ],
-  },
-];
 
 const ESSAY_TYPES = ['All Types', 'Argumentative Essay', 'Expository Essay', 'Narrative Essay', 'Research Paper'];
 
@@ -126,7 +20,9 @@ const getScoreLabel = (score) => {
 };
 
 const HistoryPage = () => {
-  const [essays, setEssays] = useState(INITIAL_ESSAYS);
+  const [essays, setEssays] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   // Filters
   const [filterType, setFilterType] = useState('All Types');
@@ -145,6 +41,31 @@ const HistoryPage = () => {
   const [regradeEssay, setRegradeEssay] = useState(null);
   const [notesEssay, setNotesEssay] = useState(null);
   const [notesInput, setNotesInput] = useState('');
+
+  const apiUrl = "http://localhost:5000";
+
+  // Load essay history from Supabase
+  useEffect(() => {
+    const loadEssayHistory = async () => {
+      try {
+        setLoading(true);
+        const response = await fetch(`${apiUrl}/api/essay-history`);
+        const data = await response.json();
+
+        if (data.success) {
+          setEssays(data.essays);
+        } else {
+          setError(data.error || 'Failed to load essay history');
+        }
+      } catch (err) {
+        setError('Failed to connect to server');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadEssayHistory();
+  }, []);
 
   // Filter + search + sort
   const filtered = useMemo(() => {
@@ -195,14 +116,51 @@ const HistoryPage = () => {
   };
 
   // Status change
-  const handleStatusChange = (id, status) => {
-    setEssays(prev => prev.map(e => e.id === id ? { ...e, status } : e));
+  const handleStatusChange = async (id, status) => {
+    try {
+      const response = await fetch(`${apiUrl}/api/essay-history/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ status }),
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        setEssays(prev => prev.map(e => e.id === id ? { ...e, status } : e));
+      } else {
+        alert('Failed to update status');
+      }
+    } catch (err) {
+      alert('Failed to update status');
+    }
   };
 
   // Save notes
-  const handleSaveNotes = () => {
-    setEssays(prev => prev.map(e => e.id === notesEssay.id ? { ...e, notes: notesInput } : e));
-    setNotesEssay(null);
+  const handleSaveNotes = async () => {
+    try {
+      const response = await fetch(`${apiUrl}/api/essay-history/${notesEssay.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          status: notesEssay.status,
+          notes: notesInput 
+        }),
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        setEssays(prev => prev.map(e => e.id === notesEssay.id ? { ...e, notes: notesInput } : e));
+        setNotesEssay(null);
+      } else {
+        alert('Failed to save notes');
+      }
+    } catch (err) {
+      alert('Failed to save notes');
+    }
   };
 
   // Re-grade: bump scores by small random delta (mock — sa real app, magbubukas ng grading form)
@@ -273,7 +231,20 @@ const HistoryPage = () => {
       {/* Table */}
       <div className="history-table-container">
         <div className="table-header-accent" />
-        {filtered.length === 0 ? (
+        {loading ? (
+          <div className="loading-state">
+            <div className="loading-spinner">⏳</div>
+            <h3>Loading essay history...</h3>
+            <p>Fetching data from Supabase...</p>
+          </div>
+        ) : error ? (
+          <div className="error-state">
+            <div className="error-icon">❌</div>
+            <h3>Error Loading Data</h3>
+            <p>{error}</p>
+            <button className="retry-btn" onClick={() => window.location.reload()}>Retry</button>
+          </div>
+        ) : filtered.length === 0 ? (
           <div className="empty-state">
             <div className="empty-icon">🔍</div>
             <h3>No Results Found</h3>

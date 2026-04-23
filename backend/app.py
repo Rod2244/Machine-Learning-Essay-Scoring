@@ -16,6 +16,7 @@ load_dotenv()
 from config import config
 from ocr_service import extract_text_from_image
 from scoring_service import scoring_service
+from supabase_client import supabase_service
 
 
 app = Flask(__name__)
@@ -231,6 +232,111 @@ def score_essay():
     except Exception as e:
         print(f"Error scoring essay: {e}")
         traceback.print_exc()
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+
+@app.route('/api/essay-history', methods=['GET'])
+def get_essay_history():
+    """
+    Get all essay scores from Supabase
+    """
+    try:
+        essays = supabase_service.get_all_essay_scores()
+        
+        return jsonify({
+            'success': True,
+            'essays': essays
+        }), 200
+        
+    except Exception as e:
+        print(f"Error fetching essay history: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+
+@app.route('/api/essay-history/<int:essay_id>', methods=['PUT'])
+def update_essay(essay_id):
+    """
+    Update essay status or notes
+    """
+    try:
+        data = request.get_json()
+        
+        if not data:
+            return jsonify({
+                'success': False,
+                'error': 'No data provided'
+            }), 400
+        
+        # Update essay in Supabase
+        success = supabase_service.update_essay_score(essay_id, data)
+        
+        if success:
+            return jsonify({
+                'success': True,
+                'message': 'Essay updated successfully'
+            }), 200
+        else:
+            return jsonify({
+                'success': False,
+                'error': 'Failed to update essay'
+            }), 500
+            
+    except Exception as e:
+        print(f"Error updating essay: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+
+@app.route('/api/essay-history/<int:essay_id>', methods=['DELETE'])
+def delete_essay(essay_id):
+    """
+    Delete an essay from Supabase
+    """
+    try:
+        success = supabase_service.delete_essay_score(essay_id)
+        
+        if success:
+            return jsonify({
+                'success': True,
+                'message': 'Essay deleted successfully'
+            }), 200
+        else:
+            return jsonify({
+                'success': False,
+                'error': 'Failed to delete essay'
+            }), 500
+            
+    except Exception as e:
+        print(f"Error deleting essay: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+
+@app.route('/api/class-analytics', methods=['GET'])
+def get_class_analytics():
+    """
+    Get class analytics from Supabase
+    """
+    try:
+        analytics = supabase_service.get_class_analytics()
+        
+        return jsonify({
+            'success': True,
+            'analytics': analytics
+        }), 200
+        
+    except Exception as e:
+        print(f"Error fetching analytics: {e}")
         return jsonify({
             'success': False,
             'error': str(e)

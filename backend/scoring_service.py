@@ -55,9 +55,26 @@ class EssayScoringService:
                 base_score = max(0, base_score - 20)  # Moderate penalty
             # On-topic essays keep their score
             
-            # Add some variety for demo (±10 points)
+            # Improve scoring based on essay quality indicators
             import random
-            score = max(0, min(100, base_score + random.randint(-10, 10)))
+            
+            # Bonus points for well-structured essays
+            structure_bonus = 0
+            if len(essay_text) > 200:  # Good length
+                structure_bonus += 8
+            if essay_text.count('.') > 5:  # Multiple sentences
+                structure_bonus += 8
+            if any(word in essay_text.lower() for word in ['conclusion', 'in conclusion', 'therefore', 'thus']):  # Has conclusion
+                structure_bonus += 8
+            if any(word in essay_text.lower() for word in ['first', 'second', 'third', 'finally', 'next']):  # Organized
+                structure_bonus += 8
+            if len(essay_text.split()) > 100:  # Good word count
+                structure_bonus += 8
+            if essay_text.count(',') > 5:  # Complex sentences
+                structure_bonus += 6
+            
+            # Add some variety but less drastic (±5 points)
+            score = max(0, min(100, base_score + structure_bonus + random.randint(-5, 5)))
             
             # Create dynamic breakdown based on rubric
             import random
@@ -84,12 +101,26 @@ class EssayScoringService:
                     
             else:
                 # Default rubric - use hardcoded logic
-                if rubric_id == 3:  # Narrative Essay
+                if rubric_id == 2:  # Expository Essay
+                    breakdown = {
+                        "Clarity": max(5, min(30, score // 3 + random.randint(-5, 10))),
+                        "Organization": max(5, min(25, score // 4 + random.randint(-3, 7))),
+                        "Research": max(5, min(25, score // 4 + random.randint(-3, 7))),
+                        "Grammar": max(5, min(20, score // 5 + random.randint(-2, 8)))
+                    }
+                elif rubric_id == 3:  # Narrative Essay
                     breakdown = {
                         "Storytelling": max(5, min(30, score // 3 + random.randint(-5, 10))),
                         "Characters": max(5, min(25, score // 4 + random.randint(-3, 7))),
                         "Engagement": max(5, min(25, score // 4 + random.randint(-5, 5))),
                         "Language": max(5, min(20, score // 5 + random.randint(-2, 8)))
+                    }
+                elif rubric_id == 4:  # Research Paper
+                    breakdown = {
+                        "Research": max(5, min(30, score // 3 + random.randint(-5, 10))),
+                        "Citations": max(5, min(25, score // 4 + random.randint(-3, 7))),
+                        "Analysis": max(5, min(25, score // 4 + random.randint(-3, 7))),
+                        "Academic Rigor": max(5, min(20, score // 5 + random.randint(-2, 8)))
                     }
                 else:  # Argumentative Essay (default)
                     breakdown = {
@@ -102,14 +133,18 @@ class EssayScoringService:
             # Use the confidence from the model
             
             # Generate feedback
-            if score >= 80:
-                feedback = "Excellent essay with strong arguments and good structure"
-            elif score >= 60:
-                feedback = "Good essay with room for improvement in clarity"
+            if score >= 85:
+                feedback = "Excellent essay with strong organization and comprehensive content"
+            elif score >= 75:
+                feedback = "Good essay with clear structure and solid content"
+            elif score >= 65:
+                feedback = "Satisfactory essay with adequate organization and content"
+            elif score >= 50:
+                feedback = "Fair essay that needs improvement in structure and depth"
             else:
-                feedback = "Essay needs work on organization and evidence"
+                feedback = "Essay needs significant work on organization and content"
             
-            return {
+            result = {
                 "success": True,
                 "score": score,
                 "category": score // 20,
@@ -117,6 +152,55 @@ class EssayScoringService:
                 "breakdown": breakdown,
                 "feedback": feedback
             }
+            
+            # Debug: print what we're returning
+            print(f"🔍 Returning scoring result: {result}")
+            
+            # Save to Supabase if available
+            try:
+                from supabase_client import supabase_service
+                
+                # Get essay type based on rubric_id
+                def get_essay_type_by_rubric_id(rubric_id):
+                    rubric_types = {
+                        1: 'Argumentative Essay',
+                        2: 'Expository Essay', 
+                        3: 'Narrative Essay',
+                        4: 'Research Paper'
+                    }
+                    return rubric_types.get(rubric_id, 'Essay')
+                
+                # Prepare data for Supabase
+                essay_data = {
+                    'student_id': 'anonymous',  # You can add student ID later
+                    'student_name': 'Anonymous Student',
+                    'essay_title': prompt[:50] + '...' if len(prompt) > 50 else prompt or 'Untitled Essay',
+                    'essay_type': get_essay_type_by_rubric_id(rubric_id),
+                    'essay_prompt': prompt,
+                    'essay_text': essay_text,
+                    'total_score': score,
+                    'max_score': 100,
+                    'breakdown': breakdown,
+                    'confidence': confidence,
+                    'feedback': feedback,
+                    'rubric_id': rubric_id,
+                    'topic_relevance': topic_relevance_score if 'topic_relevance_score' in locals() else 0.0,
+                    'status': 'Graded',
+                    'teacher_notes': ''
+                }
+                
+                # Save to Supabase
+                result = supabase_service.save_essay_score(essay_data)
+                if result['success']:
+                    print("✅ Essay score saved to Supabase")
+                else:
+                    print(f"⚠️ Failed to save to Supabase: {result.get('error', 'Unknown error')}")
+                
+            except Exception as e:
+                print(f"⚠️ Failed to save to Supabase: {e}")
+                # Continue even if Supabase fails
+            
+            return result
             
         except Exception as e:
             print(f"Scoring error: {e}")

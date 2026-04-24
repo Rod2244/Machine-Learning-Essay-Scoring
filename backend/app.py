@@ -17,6 +17,7 @@ from config import config
 from ocr_service import extract_text_from_image
 from scoring_service import scoring_service
 from supabase_client import supabase_service
+from auth_service import auth_service
 
 
 app = Flask(__name__)
@@ -98,6 +99,76 @@ def get_rubric_breakdown(total_score, rubric_id=1):
     
     return breakdown
 
+
+@app.route('/api/signup', methods=['POST'])
+def signup():
+    data = request.get_json()
+
+    user, error = auth_service.sign_up(
+        data.get("full_name"),
+        data.get("email"),
+        data.get("password")
+    )
+
+    if error:
+        return jsonify({"success": False, "error": error}), 400
+
+    return jsonify({
+        "success": True,
+        "message": "User created",
+        "user_id": user.id
+    }), 200
+
+@app.route('/api/login', methods=['POST'])
+def login():
+    data = request.get_json()
+
+    session, error = auth_service.login(
+        data.get("email"),
+        data.get("password")
+    )
+
+    if error:
+        return jsonify({"success": False, "error": error}), 401
+
+    # Extract only serializable data from Supabase session
+    try:
+        user_id = session.user.id
+        full_name = None
+        
+        # Fetch user profile to get full_name
+        try:
+            profile_response = supabase_service.client.table("profiles").select("full_name").eq("id", user_id).execute()
+            if profile_response.data and len(profile_response.data) > 0:
+                full_name = profile_response.data[0].get("full_name")
+        except Exception as profile_error:
+            print(f"⚠️ Could not fetch profile: {profile_error}")
+        
+        user_data = {
+            "id": user_id,
+            "email": session.user.email,
+            "full_name": full_name,
+            "email_confirmed_at": str(session.user.email_confirmed_at) if session.user.email_confirmed_at else None,
+            "created_at": str(session.user.created_at) if session.user.created_at else None
+        }
+        
+        token_data = {
+            "access_token": session.session.access_token,
+            "token_type": session.session.token_type,
+            "expires_in": session.session.expires_in
+        }
+        
+        return jsonify({
+            "success": True,
+            "session": token_data,
+            "user": user_data
+        }), 200
+    except Exception as e:
+        print(f"Error serializing session: {e}")
+        return jsonify({
+            "success": False,
+            "error": "Login successful but failed to process session data"
+        }), 500
 
 @app.route('/health', methods=['GET'])
 def health():

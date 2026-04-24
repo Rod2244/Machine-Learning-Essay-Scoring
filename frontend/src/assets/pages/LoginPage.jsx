@@ -13,11 +13,16 @@ const LoginPage = ({ onLogin }) => {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [apiError, setApiError] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
+
+  const API_BASE_URL = 'http://localhost:5000'; // Change if backend is on different port
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
     if (errors[name]) setErrors(prev => ({ ...prev, [name]: '' }));
+    if (apiError) setApiError('');
   };
 
   const validate = () => {
@@ -41,7 +46,7 @@ const LoginPage = ({ onLogin }) => {
     return newErrors;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     const newErrors = validate();
     if (Object.keys(newErrors).length > 0) {
@@ -50,20 +55,98 @@ const LoginPage = ({ onLogin }) => {
     }
 
     setLoading(true);
-    // Simulate async auth (mock)
-    setTimeout(() => {
+    setApiError('');
+
+    try {
+      if (mode === 'signup') {
+        // Call signup endpoint
+        const response = await fetch(`${API_BASE_URL}/api/signup`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            full_name: formData.name,
+            email: formData.email,
+            password: formData.password,
+          }),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          setApiError(data.error || 'Signup failed. Please try again.');
+          setLoading(false);
+          return;
+        }
+
+        // Signup successful
+        console.log('✓ Signup successful:', data);
+        setLoading(false);
+        
+        // Show success message
+        setSuccessMessage(`✓ Account created successfully! Welcome, ${formData.name}. Redirecting to login...`);
+        
+        // Clear form
+        setFormData({ name: '', email: '', password: '', confirmPassword: '' });
+        setErrors({});
+        setApiError('');
+        
+        // Redirect to login after 2.5 seconds
+        setTimeout(() => {
+          setSuccessMessage('');
+          setMode('login');
+        }, 2500);
+      } else {
+        // Call login endpoint
+        const response = await fetch(`${API_BASE_URL}/api/login`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            email: formData.email,
+            password: formData.password,
+          }),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          setApiError(data.error || 'Login failed. Please try again.');
+          setLoading(false);
+          return;
+        }
+
+        // Login successful - save token and user info
+        console.log('✓ Login successful:', data);
+        
+        // Store session token and user info for future requests
+        localStorage.setItem('session_token', data.session.access_token);
+        localStorage.setItem('user_email', data.user.email);
+        localStorage.setItem('user_id', data.user.id);
+        localStorage.setItem('user_full_name', data.user.full_name || data.user.email.split('@')[0]);
+        
+        onLogin({
+          name: data.user.full_name || data.user.email.split('@')[0],
+          email: data.user.email,
+          user_id: data.user.id,
+          session: data.session,
+        });
+        setLoading(false);
+      }
+    } catch (error) {
+      console.error('API Error:', error);
+      setApiError(error.message || 'Connection error. Make sure backend is running on port 5000.');
       setLoading(false);
-      onLogin({
-        name: formData.name || formData.email.split('@')[0],
-        email: formData.email,
-      });
-    }, 1200);
+    }
   };
 
   const switchMode = () => {
     setMode(prev => prev === 'login' ? 'signup' : 'login');
     setFormData({ name: '', email: '', password: '', confirmPassword: '' });
     setErrors({});
+    setApiError('');
   };
 
   return (
@@ -91,6 +174,7 @@ const LoginPage = ({ onLogin }) => {
             className={`toggle-btn ${mode === 'login' ? 'active' : ''}`}
             onClick={() => setMode('login')}
             type="button"
+            disabled={successMessage ? true : false}
           >
             Log In
           </button>
@@ -98,6 +182,7 @@ const LoginPage = ({ onLogin }) => {
             className={`toggle-btn ${mode === 'signup' ? 'active' : ''}`}
             onClick={() => setMode('signup')}
             type="button"
+            disabled={successMessage ? true : false}
           >
             Sign Up
           </button>
@@ -109,7 +194,39 @@ const LoginPage = ({ onLogin }) => {
             : 'Create your account to get started.'}
         </p>
 
-        <form onSubmit={handleSubmit} className="login-form" noValidate>
+        {/* API Error Message */}
+        {apiError && (
+          <div className="api-error-msg" style={{
+            backgroundColor: '#fee',
+            color: '#c00',
+            padding: '10px 12px',
+            borderRadius: '6px',
+            marginBottom: '15px',
+            fontSize: '14px',
+            border: '1px solid #fcc'
+          }}>
+            {apiError}
+          </div>
+        )}
+
+        {/* Success Message */}
+        {successMessage && (
+          <div className="api-success-msg" style={{
+            backgroundColor: '#efe',
+            color: '#060',
+            padding: '10px 12px',
+            borderRadius: '6px',
+            marginBottom: '15px',
+            fontSize: '14px',
+            border: '1px solid #cfc',
+            textAlign: 'center',
+            fontWeight: '500'
+          }}>
+            {successMessage}
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="login-form" noValidate disabled={successMessage ? true : false}>
           {/* Name field — signup only */}
           <div className={`form-field ${mode === 'signup' ? 'visible' : 'hidden'}`}>
             <label className="form-label" htmlFor="name">Full Name</label>
@@ -221,7 +338,7 @@ const LoginPage = ({ onLogin }) => {
             </div>
           )}
 
-          <button type="submit" className={`submit-btn ${loading ? 'loading' : ''}`} disabled={loading}>
+          <button type="submit" className={`submit-btn ${loading || successMessage ? 'loading' : ''}`} disabled={loading || successMessage ? true : false}>
             {loading
               ? <span className="loading-dots"><span /><span /><span /></span>
               : mode === 'login' ? 'Log In' : 'Create Account'}
@@ -230,7 +347,7 @@ const LoginPage = ({ onLogin }) => {
 
         <p className="switch-prompt">
           {mode === 'login' ? "Don't have an account? " : 'Already have an account? '}
-          <button type="button" className="switch-btn" onClick={switchMode}>
+          <button type="button" className="switch-btn" onClick={switchMode} disabled={successMessage ? true : false}>
             {mode === 'login' ? 'Sign up' : 'Log in'}
           </button>
         </p>

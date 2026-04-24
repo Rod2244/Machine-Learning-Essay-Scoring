@@ -295,6 +295,54 @@ class SupabaseService:
                 'max': 25  # Default max score, adjust as needed
             })
         return criteria
+    
+    def sign_up(self, email: str, password: str):
+        """
+        Sign up a new user with Supabase Auth
+        
+        Args:
+            email: User email
+            password: User password
+            
+        Returns:
+            Response object with user data
+        """
+        if not self.is_connected():
+            raise Exception("Supabase not connected")
+        
+        try:
+            response = self.client.auth.sign_up({
+                "email": email,
+                "password": password
+            })
+            return response
+        except Exception as e:
+            print(f"❌ Signup error: {e}")
+            raise e
+    
+    def sign_in(self, email: str, password: str):
+        """
+        Sign in a user with Supabase Auth
+        
+        Args:
+            email: User email
+            password: User password
+            
+        Returns:
+            Session object with user and auth token
+        """
+        if not self.is_connected():
+            raise Exception("Supabase not connected")
+        
+        try:
+            response = self.client.auth.sign_in_with_password({
+                "email": email,
+                "password": password
+            })
+            return response
+        except Exception as e:
+            print(f"❌ Login error: {e}")
+            raise e
 
 # Global instance
 supabase_service = SupabaseService()

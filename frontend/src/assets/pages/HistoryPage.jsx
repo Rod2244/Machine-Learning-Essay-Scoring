@@ -49,15 +49,27 @@ const HistoryPage = () => {
     const loadEssayHistory = async () => {
       try {
         setLoading(true);
-        const response = await fetch(`${apiUrl}/api/essay-history`);
+        setError(null);
+
+        // Get user_id from localStorage (set during login)
+        const user_id = localStorage.getItem('user_id');
+        if (!user_id) {
+          setError('Please log in first to view your essay history');
+          setLoading(false);
+          return;
+        }
+
+        // Fetch only user's essays
+        const response = await fetch(`${apiUrl}/api/essay-history?user_id=${user_id}`);
         const data = await response.json();
 
         if (data.success) {
-          setEssays(data.essays);
+          setEssays(data.essays || []);
         } else {
           setError(data.error || 'Failed to load essay history');
         }
       } catch (err) {
+        console.error('Error loading history:', err);
         setError('Failed to connect to server');
       } finally {
         setLoading(false);

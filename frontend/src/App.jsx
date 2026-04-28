@@ -15,6 +15,34 @@ const App = () => {
   const [showLanding, setShowLanding] = useState(true); // Show landing page by default
   const [currentPage, setCurrentPage] = useState('home'); // Track current landing page
 
+  // ✅ Restore session from localStorage on page load/refresh
+  React.useEffect(() => {
+    const sessionToken = localStorage.getItem('session_token');
+    const userId = localStorage.getItem('user_id');
+    const userFullName = localStorage.getItem('user_full_name');
+    
+    console.log('🔄 App mounting - checking localStorage...');
+    console.log('   session_token exists:', !!sessionToken);
+    console.log('   user_id:', userId);
+    console.log('   user_full_name:', userFullName);
+    
+    if (sessionToken && userId && userFullName) {
+      // Session exists in localStorage, restore user login state
+      console.log('✅ Session restored from localStorage!');
+      setUser({
+        id: userId,
+        full_name: userFullName,
+      });
+    } else {
+      console.log('⚠️ No complete session in localStorage');
+      console.log('   Missing:', {
+        session_token: !sessionToken,
+        user_id: !userId,
+        user_full_name: !userFullName
+      });
+    }
+  }, []); // Run only once on mount
+
   // Listen for custom event to show landing page
   React.useEffect(() => {
     const handleShowLanding = () => {
@@ -90,9 +118,15 @@ const App = () => {
   };
 
   const handleLogout = () => {
+    // Clear localStorage when logging out
+    localStorage.removeItem('session_token');
+    localStorage.removeItem('user_id');
+    localStorage.removeItem('user_full_name');
+    
     setUser(null);
     setActiveTab('essays');
     setShowLanding(false); // Show login page after logout
+    console.log('✓ Logged out and cleared session');
   };
 
   // Show landing page if requested

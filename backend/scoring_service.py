@@ -189,12 +189,10 @@ class EssayScoringService:
                     'teacher_notes': ''
                 }
                 
-                # Save to Supabase
-                result = supabase_service.save_essay_score(essay_data)
-                if result['success']:
-                    print("✅ Essay score saved to Supabase")
-                else:
-                    print(f"⚠️ Failed to save to Supabase: {result.get('error', 'Unknown error')}")
+                # ✅ NOTE: Saving to Supabase is now handled in app.py /api/score endpoint
+                # This ensures user_id is properly included
+                # The scoring_service should NOT auto-save without user_id
+                # print("✅ Essay score saved to Supabase")
                 
             except Exception as e:
                 print(f"⚠️ Failed to save to Supabase: {e}")

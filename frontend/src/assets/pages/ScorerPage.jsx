@@ -22,6 +22,15 @@ const ScorerPage = () => {
   // File Upload
   const fileInputRef = React.useRef(null);
 
+  // ✅ Debug: Check localStorage when component mounts
+  useEffect(() => {
+    console.log('📖 ScorerPage mounted - checking localStorage:');
+    console.log('   user_id:', localStorage.getItem('user_id'));
+    console.log('   user_full_name:', localStorage.getItem('user_full_name'));
+    console.log('   session_token exists:', !!localStorage.getItem('session_token'));
+    console.log('   All localStorage keys:', Object.keys(localStorage));
+  }, []);
+
   // Load available rubrics from backend on component mount
   useEffect(() => {
     const loadRubrics = async () => {
@@ -112,16 +121,48 @@ const ScorerPage = () => {
     setScoringResult(null);
 
     try {
+      // Get user_id from localStorage (set during login)
+      const user_id = localStorage.getItem('user_id');
+      const user_full_name = localStorage.getItem('user_full_name');
+      const session_token = localStorage.getItem('session_token');
+      
+      console.log("📝 Scoring essay...");
+      console.log("   user_id:", user_id);
+      console.log("   user_full_name:", user_full_name);
+      console.log("   session_token exists:", !!session_token);
+      console.log("   localStorage keys:", Object.keys(localStorage));
+      
+      // Validate user_id exists and is a valid UUID
+      if (!user_id || user_id === 'null' || user_id === 'undefined' || user_id.length === 0) {
+        console.error("❌ ERROR: user_id is missing or invalid!");
+        console.error("   localStorage user_id:", user_id);
+        console.error("   localStorage contents:", {
+          user_id: localStorage.getItem('user_id'),
+          user_full_name: localStorage.getItem('user_full_name'),
+          session_token: localStorage.getItem('session_token')
+        });
+        setError("❌ Session expired. Please log in again to save your essay scores.");
+        setIsLoading(false);
+        return;
+      }
+
+      const requestBody = {
+        prompt: essayPrompt,
+        response: studentResponse,
+        rubric_id: selectedRubricId,
+        user_id: user_id,  // ✓ Include user_id
+        student_name: user_full_name || "Student",
+        essay_type: selectedRubric?.title || "Essay"
+      };
+      
+      console.log("📤 Sending request to backend:", requestBody);
+
       const response = await fetch(`${apiUrl}/api/score`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          prompt: essayPrompt,
-          response: studentResponse,
-          rubric_id: selectedRubricId,
-        }),
+        body: JSON.stringify(requestBody),
       });
 
       if (!response.ok) {
@@ -337,11 +378,11 @@ const ScorerPage = () => {
                   selectedRubric.criteria.map((criterion, idx) => {
                     // Debug: log the entire scoring result
                     console.log('Full scoring result:', scoringResult);
-                    console.log('Breakdown:', scoringResult.data?.breakdown);
+                    console.log('Breakdown:', scoringResult?.breakdown);
                     console.log('Criterion name:', criterion.name);
                     
-                    // Safe check for breakdown
-                    if (!scoringResult.data?.breakdown) {
+                    // Safe check for breakdown - access directly from scoringResult
+                    if (!scoringResult?.breakdown) {
                       console.warn('No breakdown found in scoring result');
                       return null; // Skip this criterion
                     }
@@ -357,10 +398,15 @@ const ScorerPage = () => {
                     
                     let score = 0;
                     for (const key of possibleKeys) {
-                      if (scoringResult.data.breakdown[key] !== undefined) {
-                        score = scoringResult.data.breakdown[key];
+                      if (scoringResult.breakdown[key] !== undefined) {
+                        score = scoringResult.breakdown[key];
+                        console.log(`✓ Found score for ${criterion.name}: ${score}`);
                         break;
                       }
+                    }
+                    
+                    if (score === 0) {
+                      console.warn(`⚠️ No score found for ${criterion.name} in breakdown:`, scoringResult.breakdown);
                     }
                     return (
                       <div className="rubric-card" key={idx}>
@@ -387,7 +433,7 @@ const ScorerPage = () => {
                 <h4>Total Score</h4>
                 <div className="total-score-display">
                   <span className="total-score-value">
-                    {scoringResult.data?.total_score || 0}
+                    {scoringResult.score || 0}
                   </span>
                   <span className="total-score-max">/100</span>
                 </div>

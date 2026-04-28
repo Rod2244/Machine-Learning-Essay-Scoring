@@ -127,6 +127,12 @@ const LoginPage = ({ onLogin }) => {
         localStorage.setItem('user_id', data.user.id);
         localStorage.setItem('user_full_name', data.user.full_name || data.user.email.split('@')[0]);
         
+        // ✅ Verify localStorage was set correctly
+        console.log('✓ Stored in localStorage:');
+        console.log('   user_id:', localStorage.getItem('user_id'));
+        console.log('   user_full_name:', localStorage.getItem('user_full_name'));
+        console.log('   session_token exists:', !!localStorage.getItem('session_token'));
+        
         onLogin({
           name: data.user.full_name || data.user.email.split('@')[0],
           email: data.user.email,

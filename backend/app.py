@@ -240,28 +240,18 @@ def ocr_extract():
 @app.route('/api/score', methods=['POST'])
 def score_essay():
     """
-    Score an essay
+    Score an essay and save to database
     
     Request body:
     {
         "prompt": "Essay question/prompt",
         "response": "Student's essay text",
-        "rubric_id": 1  (optional, defaults to 1)
-    }
-    
-    Response:
-    {
-        "success": true,
-        "score": 85,
-        "category": 4,
-        "confidence": 0.92,
-        "breakdown": {
-            "criterion1": 25,
-            "criterion2": 23,
-            ...
-        },
-        "feedback": "Strong essay with good argumentation",
-        "rubric_used": 1
+        "student_name": "Student name (optional)",
+        "student_id": "Student ID (optional)",
+        "essay_title": "Essay title (optional)",
+        "essay_type": "Essay type like 'Argumentative'",
+        "rubric_id": 1,
+        "user_id": "User's UUID from auth (required for history)"
     }
     """
     
@@ -274,6 +264,9 @@ def score_essay():
     try:
         data = request.get_json()
         
+        print(f"\n🚀 INSIDE score_essay() try block")
+        print(f"   data keys: {list(data.keys()) if data else 'NO DATA'}")
+        
         if not data or 'response' not in data:
             return jsonify({
                 'success': False,
@@ -282,6 +275,13 @@ def score_essay():
         
         essay_text = data.get('response', '').strip()
         rubric_id = data.get('rubric_id', 1)
+        user_id = data.get('user_id')  # Get user_id from request
+        
+        print(f"\n📝 Scoring essay request:")
+        print(f"   user_id: {user_id}")
+        print(f"   user_id type: {type(user_id)}")
+        print(f"   essay length: {len(essay_text)} chars")
+        print(f"   rubric_id: {rubric_id}")
         
         if len(essay_text) < 10:
             return jsonify({
@@ -295,13 +295,62 @@ def score_essay():
         if not result['success']:
             return jsonify(result), 500
         
-        prediction = result
+        print(f"\n✅ About to check user_id and save essay...")
+        print(f"   user_id value is: {repr(user_id)}")
         
-        # Use the result from scoring service
+        # Save essay to database if user is logged in
+        # Check for various falsy values: None, empty string, 'null', 'undefined'
+        if not user_id or user_id == 'null' or user_id == 'undefined' or (isinstance(user_id, str) and len(user_id.strip()) == 0):
+            print("⚠️ WARNING: No valid user_id provided - essay will NOT be saved to history")
+            print(f"   Reason: user_id={repr(user_id)}")
+            return jsonify(result), 200
+        
+        print(f"💾 Attempting to save essay for user: {user_id}")
+        
+        essay_data = {
+            'user_id': user_id,  # ✓ MUST include user_id
+            'student_id': data.get('student_id', 'anonymous'),
+            'student_name': data.get('student_name', 'Anonymous'),
+            'essay_title': data.get('essay_title') or data.get('prompt') or 'Untitled Essay',  # ✓ Default to prompt if no title
+            'essay_type': data.get('essay_type', 'Essay'),
+            'essay_prompt': data.get('prompt', ''),
+            'essay_text': essay_text,
+            'total_score': result.get('score', 0),
+            'max_score': 100,
+            'breakdown': result.get('breakdown', {}),
+            'confidence': result.get('confidence', 0.0),
+            'feedback': result.get('feedback', ''),
+            'rubric_id': rubric_id,
+            'topic_relevance': result.get('topic_relevance', 0.0),
+            'status': 'Graded',
+            'teacher_notes': ''
+        }
+        
+        # ✅ DEBUG: Log what we're sending to save_essay_score
+        print(f"📊 essay_data being sent to save_essay_score:")
+        print(f"   user_id in essay_data: {essay_data.get('user_id')}")
+        print(f"   user_id is None: {essay_data.get('user_id') is None}")
+        print(f"   user_id type: {type(essay_data.get('user_id'))}")
+        
+        save_result = supabase_service.save_essay_score(essay_data)
+        if save_result['success']:
+            print(f"✓ Essay saved successfully!")
+            result['essay_id'] = save_result['data'].get('id')
+        else:
+            print(f"❌ Could not save essay: {save_result.get('error')}")
+        
+        # ✅ DEBUG: Log what we're returning to frontend
+        print(f"\n📤 Returning response to frontend:")
+        print(f"   result keys: {list(result.keys())}")
+        print(f"   breakdown: {result.get('breakdown')}")
+        print(f"   score: {result.get('score')}")
+        
         return jsonify(result), 200
         
     except Exception as e:
+        print(f"\n❌❌❌ EXCEPTION CAUGHT IN SCORE ENDPOINT ❌❌❌")
         print(f"Error scoring essay: {e}")
+        print(f"Exception type: {type(e).__name__}")
         traceback.print_exc()
         return jsonify({
             'success': False,
@@ -312,14 +361,29 @@ def score_essay():
 @app.route('/api/essay-history', methods=['GET'])
 def get_essay_history():
     """
-    Get all essay scores from Supabase
+    Get essay scores from Supabase - filtered by user_id
+    
+    Query parameters:
+    - user_id: (required) The UUID of the logged-in user
+    - limit: (optional) Number of essays to return, default 50
     """
     try:
-        essays = supabase_service.get_all_essay_scores()
+        user_id = request.args.get('user_id')
+        limit = request.args.get('limit', 50, type=int)
+        
+        if not user_id:
+            return jsonify({
+                'success': False,
+                'error': 'user_id parameter required'
+            }), 400
+        
+        # Get essays for specific user
+        essays = supabase_service.get_user_essay_scores(user_id, limit)
         
         return jsonify({
             'success': True,
-            'essays': essays
+            'essays': essays,
+            'count': len(essays)
         }), 200
         
     except Exception as e:

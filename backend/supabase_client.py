@@ -37,6 +37,7 @@ class SupabaseService:
         
         Args:
             essay_data = {
+                'user_id': str (UUID - required for associating with user),
                 'student_id': str,
                 'student_name': str,
                 'essay_title': str,
@@ -45,21 +46,30 @@ class SupabaseService:
                 'essay_text': str,
                 'total_score': int,
                 'max_score': int,
-                'breakdown': Dict,  # rubric breakdown
+                'breakdown': Dict,
                 'confidence': float,
                 'feedback': str,
                 'rubric_id': int,
                 'topic_relevance': float,
-                'status': str,  # 'Graded', 'For Review', 'Returned'
+                'status': str,
                 'teacher_notes': str
             }
         """
+        # ✅ DEBUG: Log what we receive
+        print(f"\n🔍 save_essay_score() called")
+        print(f"   essay_data type: {type(essay_data)}")
+        print(f"   essay_data keys: {list(essay_data.keys()) if isinstance(essay_data, dict) else 'NOT A DICT'}")
+        print(f"   user_id key exists: {'user_id' in essay_data}")
+        print(f"   user_id value: {essay_data.get('user_id') if isinstance(essay_data, dict) else 'N/A'}")
+        print(f"   full essay_data: {essay_data}")
+        
         if not self.is_connected():
             return {'success': False, 'error': 'Supabase not connected'}
         
         try:
-            # Prepare data for Supabase
+            # Prepare data for Supabase - INCLUDE user_id!
             record = {
+                'user_id': essay_data.get('user_id'),  # ✓ CRITICAL: Include user_id
                 'student_id': essay_data.get('student_id', 'anonymous'),
                 'student_name': essay_data.get('student_name', 'Anonymous Student'),
                 'essay_title': essay_data.get('essay_title', 'Untitled Essay'),
@@ -74,15 +84,21 @@ class SupabaseService:
                 'rubric_id': essay_data.get('rubric_id', 1),
                 'topic_relevance': essay_data.get('topic_relevance', 0.0),
                 'status': essay_data.get('status', 'Graded'),
-                'teacher_notes': essay_data.get('teacher_notes', ''),
-                'created_at': datetime.now().isoformat(),
-                'updated_at': datetime.now().isoformat()
+                'teacher_notes': essay_data.get('teacher_notes', '')
             }
             
-            # Insert into Supabase
+            # Verify user_id exists
+            if not record['user_id']:
+                print("⚠️ WARNING: user_id is missing from essay_data!")
+                return {'success': False, 'error': 'user_id is required to save essays'}
+            
+            print(f"💾 Saving essay for user: {record['user_id']}")
+            
+            # Insert into Supabase - let database handle created_at/updated_at timestamps
             result = self.client.table('essay_scores').insert(record).execute()
             
-            if result.data:
+            if result.data and len(result.data) > 0:
+                print(f"✓ Essay saved successfully with ID: {result.data[0].get('id')}")
                 return {'success': True, 'data': result.data[0]}
             else:
                 return {'success': False, 'error': 'Failed to save to Supabase'}
@@ -241,6 +257,47 @@ class SupabaseService:
                 
         except Exception as e:
             print(f"❌ Error fetching all essays: {e}")
+            return []
+    
+    def get_user_essay_scores(self, user_id: str, limit: int = 50) -> List:
+        """
+        Get essay scores for a specific user from Supabase
+        
+        Args:
+            user_id: The UUID of the user
+            limit: Maximum number of records to return
+        
+        Returns:
+            List of essays for the user
+        """
+        if not self.is_connected():
+            return []
+        
+        try:
+            result = self.client.table('essay_scores').select('*').eq('user_id', user_id).order('created_at', desc=True).limit(limit).execute()
+            
+            if result.data:
+                # Convert Supabase data to frontend format
+                essays = []
+                for essay in result.data:
+                    essays.append({
+                        'id': essay['id'],
+                        'title': essay['essay_title'],
+                        'student': essay['student_name'],
+                        'type': essay['essay_type'],
+                        'date': essay['created_at'].split('T')[0],  # Format as YYYY-MM-DD
+                        'totalScore': essay['total_score'],
+                        'maxScore': essay['max_score'],
+                        'status': essay['status'],
+                        'notes': essay['teacher_notes'],
+                        'criteria': self._convert_breakdown_to_criteria(essay.get('breakdown', {}))
+                    })
+                return essays
+            else:
+                return []
+                
+        except Exception as e:
+            print(f"❌ Error fetching user essays: {e}")
             return []
     
     def update_essay_score(self, essay_id: int, data: Dict) -> bool:

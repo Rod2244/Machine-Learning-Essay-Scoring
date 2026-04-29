@@ -1,115 +1,177 @@
-import React, { useState } from 'react';
-import '../css/RubricsSection.css';
-import RubricsEditsec from './RubricsEditsec';
+import React, { useState, useEffect } from "react";
+import "../css/RubricsSection.css";
+import RubricsEditsec from "./RubricsEditsec";
 
 // Default rubrics na built-in, hindi pwedeng i-delete
 const INITIAL_RUBRICS = [
   {
     id: 1,
-    icon: '📝',
-    title: 'Argumentative Essay',
-    description: 'Evaluates thesis statement, evidence quality, logical reasoning, and counterarguments',
+    icon: "📝",
+    title: "Argumentative Essay",
+    description:
+      "Evaluates thesis statement, evidence quality, logical reasoning, and counterarguments",
     isCustom: false,
     criteria: [
-      { name: 'Thesis', points: 25 },
-      { name: 'Evidence', points: 25 },
-      { name: 'Structure', points: 30 },
-      { name: 'Grammar', points: 20 },
+      { name: "Thesis", points: 25 },
+      { name: "Evidence", points: 25 },
+      { name: "Structure", points: 30 },
+      { name: "Grammar", points: 20 },
     ],
   },
   {
     id: 2,
-    icon: '📋',
-    title: 'Expository Essay',
-    description: 'Assesses clarity, organization, research integration, and explanatory power',
+    icon: "📋",
+    title: "Expository Essay",
+    description:
+      "Assesses clarity, organization, research integration, and explanatory power",
     isCustom: false,
     criteria: [
-      { name: 'Clarity', points: 30 },
-      { name: 'Organization', points: 25 },
-      { name: 'Research', points: 25 },
-      { name: 'Grammar', points: 20 },
+      { name: "Clarity", points: 30 },
+      { name: "Organization", points: 25 },
+      { name: "Research", points: 25 },
+      { name: "Grammar", points: 20 },
     ],
   },
   {
     id: 3,
-    icon: '📚',
-    title: 'Narrative Essay',
-    description: 'Measures storytelling elements, character development, and emotional engagement',
+    icon: "📚",
+    title: "Narrative Essay",
+    description:
+      "Measures storytelling elements, character development, and emotional engagement",
     isCustom: false,
     criteria: [
-      { name: 'Storytelling', points: 30 },
-      { name: 'Characters', points: 25 },
-      { name: 'Engagement', points: 25 },
-      { name: 'Language', points: 20 },
+      { name: "Storytelling", points: 30 },
+      { name: "Characters", points: 25 },
+      { name: "Engagement", points: 25 },
+      { name: "Language", points: 20 },
     ],
   },
   {
     id: 4,
-    icon: '🔬',
-    title: 'Research Paper',
-    description: 'Evaluates research depth, citation quality, analysis, and academic rigor',
+    icon: "🔬",
+    title: "Research Paper",
+    description:
+      "Evaluates research depth, citation quality, analysis, and academic rigor",
     isCustom: false,
     criteria: [
-      { name: 'Research', points: 30 },
-      { name: 'Citations', points: 25 },
-      { name: 'Analysis', points: 25 },
-      { name: 'Rigor', points: 20 },
+      { name: "Research", points: 30 },
+      { name: "Citations", points: 25 },
+      { name: "Analysis", points: 25 },
+      { name: "Rigor", points: 20 },
     ],
   },
 ];
 
 // Mga emoji choices para sa custom rubric icon picker
-const ICON_OPTIONS = ['✍️', '🧠', '💡', '📖', '🎯', '🖊️', '📰', '🗂️', '🏛️', '🌐'];
+const ICON_OPTIONS = [
+  "✍️",
+  "🧠",
+  "💡",
+  "📖",
+  "🎯",
+  "🖊️",
+  "📰",
+  "🗂️",
+  "🏛️",
+  "🌐",
+];
 
 const RubricsSection = () => {
-  const [rubrics, setRubrics] = useState(INITIAL_RUBRICS);
+  const [rubrics, setRubrics] = useState([]);
   const [selectedRubric, setSelectedRubric] = useState(null);
-
-  // Para sa "Add Essay Type" modal
   const [showAddModal, setShowAddModal] = useState(false);
-  const [newTitle, setNewTitle] = useState('');
-  const [newDesc, setNewDesc] = useState('');
-  const [newIcon, setNewIcon] = useState('✍️');
+  const [newTitle, setNewTitle] = useState("");
+  const [newDesc, setNewDesc] = useState("");
+  const [newIcon, setNewIcon] = useState("✍️");
 
-  // I-save yung edited rubric back sa list
-  const handleSave = (data) => {
-    setRubrics(prev =>
-      prev.map(r => r.id === selectedRubric.id
-        ? {
-            ...r,
-            title: data.title,
-            criteria: data.criteria.map(c => ({
-              name: c.name,
-              points: Math.max(...c.levels.map(l => l.score)),
-            })),
-          }
-        : r
-      )
-    );
+  // Fetch rubrics from backend on mount
+  const fetchRubrics = async () => {
+    try {
+      const response = await fetch("http://localhost:5000/api/rubrics");
+      const data = await response.json();
+      setRubrics(data);
+    } catch (err) {
+      console.error("Failed to fetch rubrics:", err);
+    }
+  };
+
+  useEffect(() => {
+    fetchRubrics();
+  }, []);
+
+  // Save rubric edits to backend
+  const handleSave = async (data) => {
+    if (!selectedRubric || !selectedRubric.id) return;
+    // Prepare updated rubric
+    const updatedRubric = {
+      ...selectedRubric,
+      title: data.title,
+      criteria: data.criteria.map((c) => ({
+        name: c.name,
+        points: Math.max(...c.levels.map((l) => l.score)),
+      })),
+    };
+    try {
+      const response = await fetch(
+        `http://localhost:5000/api/rubrics/${selectedRubric.id}`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(updatedRubric),
+        },
+      );
+      const result = await response.json();
+      if (!result.success) {
+        alert("Failed to update rubric: " + (result.error || "Unknown error"));
+      } else {
+        fetchRubrics(); // Refresh list
+      }
+    } catch (err) {
+      alert("Failed to update rubric: " + err.message);
+    }
     setSelectedRubric(null);
   };
 
-  // Add new custom essay type
-  const handleAddEssayType = () => {
+  // Add new custom essay type and save to backend
+  const handleAddEssayType = async () => {
     if (!newTitle.trim()) return;
+    const user_id = localStorage.getItem("user_id");
     const newRubric = {
-      id: Date.now(),
       icon: newIcon,
       title: newTitle.trim(),
-      description: newDesc.trim() || 'Custom essay type rubric',
+      description: newDesc.trim() || "Custom essay type rubric",
       isCustom: true,
       criteria: [
-        { name: 'Content', points: 25 },
-        { name: 'Organization', points: 25 },
-        { name: 'Language', points: 25 },
-        { name: 'Grammar', points: 25 },
+        { name: "Content", points: 25 },
+        { name: "Organization", points: 25 },
+        { name: "Language", points: 25 },
+        { name: "Grammar", points: 25 },
       ],
+      created_by: user_id,
     };
-    setRubrics(prev => [...prev, newRubric]);
+
+    // Save to backend
+    try {
+      const response = await fetch("http://localhost:5000/api/rubrics", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newRubric),
+      });
+      const data = await response.json();
+      if (data.success && data.rubric) {
+        setRubrics((prev) => [...prev, { ...newRubric, id: data.rubric.id }]);
+        // Optionally show a success message
+      } else {
+        alert("Failed to save rubric: " + (data.error || "Unknown error"));
+      }
+    } catch (err) {
+      alert("Failed to save rubric: " + err.message);
+    }
+
     // Reset form fields
-    setNewTitle('');
-    setNewDesc('');
-    setNewIcon('✍️');
+    setNewTitle("");
+    setNewDesc("");
+    setNewIcon("✍️");
     setShowAddModal(false);
     // Agad i-edit yung bagong rubric
     setSelectedRubric(newRubric);
@@ -118,7 +180,7 @@ const RubricsSection = () => {
   const handleDelete = (id, e) => {
     // Pigilan yung card click pag delete ang pinindot
     e.stopPropagation();
-    setRubrics(prev => prev.filter(r => r.id !== id));
+    setRubrics((prev) => prev.filter((r) => r.id !== id));
   };
 
   if (selectedRubric) {
@@ -148,7 +210,7 @@ const RubricsSection = () => {
               onClick={() => setSelectedRubric(rubric)}
               role="button"
               tabIndex={0}
-              onKeyDown={(e) => e.key === 'Enter' && setSelectedRubric(rubric)}
+              onKeyDown={(e) => e.key === "Enter" && setSelectedRubric(rubric)}
             >
               {/* Delete button — visible lang sa mga custom rubrics */}
               {rubric.isCustom && (
@@ -188,7 +250,7 @@ const RubricsSection = () => {
           onClick={() => setShowAddModal(true)}
           role="button"
           tabIndex={0}
-          onKeyDown={(e) => e.key === 'Enter' && setShowAddModal(true)}
+          onKeyDown={(e) => e.key === "Enter" && setShowAddModal(true)}
         >
           <span className="rubric-add-icon">＋</span>
           <h3>Add Essay Type</h3>
@@ -208,7 +270,7 @@ const RubricsSection = () => {
               {ICON_OPTIONS.map((icon) => (
                 <button
                   key={icon}
-                  className={`modal-icon-btn ${newIcon === icon ? 'active' : ''}`}
+                  className={`modal-icon-btn ${newIcon === icon ? "active" : ""}`}
                   onClick={() => setNewIcon(icon)}
                 >
                   {icon}
@@ -235,7 +297,10 @@ const RubricsSection = () => {
             />
 
             <div className="modal-footer">
-              <button className="modal-cancel-btn" onClick={() => setShowAddModal(false)}>
+              <button
+                className="modal-cancel-btn"
+                onClick={() => setShowAddModal(false)}
+              >
                 Cancel
               </button>
               <button

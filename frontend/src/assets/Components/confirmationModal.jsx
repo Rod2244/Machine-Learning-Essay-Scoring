@@ -17,7 +17,7 @@ const ConfirmationModal = ({
 
   // Load current rubric criteria when modal opens
   useEffect(() => {
-    if (isOpen && selectedRubricId) {
+    if (isOpen && selectedRubricId !== undefined && selectedRubricId !== null) {
       loadRubricCriteria();
     }
   }, [isOpen, selectedRubricId]);
@@ -28,7 +28,9 @@ const ConfirmationModal = ({
       if (response.ok) {
         const allRubrics = await response.json();
         const selectedRubric = allRubrics.find(
-          (r) => r.id === selectedRubricId,
+          (r) =>
+            r.id === selectedRubricId ||
+            String(r.id) === String(selectedRubricId),
         );
 
         if (selectedRubric && selectedRubric.criteria) {

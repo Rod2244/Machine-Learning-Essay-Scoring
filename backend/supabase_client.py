@@ -3,9 +3,17 @@ Supabase Client for Student Score History
 """
 import os
 from dotenv import load_dotenv
-from supabase import create_client, Client
 from datetime import datetime
 from typing import Dict, List, Optional
+
+# Try to import supabase, but make it optional
+try:
+    from supabase import create_client, Client
+    SUPABASE_AVAILABLE = True
+except ImportError:
+    SUPABASE_AVAILABLE = False
+    Client = None
+    create_client = None
 
 # Load environment variables
 load_dotenv()
@@ -15,6 +23,11 @@ class SupabaseService:
         # Load environment variables
         self.supabase_url = os.getenv('SUPABASE_URL')
         self.supabase_key = os.getenv('SUPABASE_ANON_KEY')
+        self.client = None
+        
+        if not SUPABASE_AVAILABLE:
+            print("⚠️ Supabase module not installed (optional dependency)")
+            return
         
         if not self.supabase_url or not self.supabase_key:
             print("⚠️ Supabase credentials not found in environment variables")
@@ -95,13 +108,35 @@ class SupabaseService:
             print(f"💾 Saving essay for user: {record['user_id']}")
             
             # Insert into Supabase - let database handle created_at/updated_at timestamps
-            result = self.client.table('essay_scores').insert(record).execute()
-            
-            if result.data and len(result.data) > 0:
-                print(f"✓ Essay saved successfully with ID: {result.data[0].get('id')}")
-                return {'success': True, 'data': result.data[0]}
-            else:
-                return {'success': False, 'error': 'Failed to save to Supabase'}
+            try:
+                result = self.client.table('essay_scores').insert(record).execute()
+                if result.data and len(result.data) > 0:
+                    print(f"✓ Essay saved successfully with ID: {result.data[0].get('id')}")
+                    return {'success': True, 'data': result.data[0]}
+                else:
+                    return {'success': False, 'error': 'Failed to save to Supabase'}
+            except Exception as e:
+                # Handle common type mismatch when rubric_id is a UUID but DB expects bigint
+                err_str = str(e)
+                print(f"❌ Error saving essay score: {err_str}")
+                if 'invalid input syntax for type bigint' in err_str and record.get('rubric_id') and not str(record.get('rubric_id')).isdigit():
+                    print("⚠️ Detected bigint type error for rubric_id; retrying without numeric rubric_id and storing UUID in teacher_notes")
+                    retry_record = record.copy()
+                    # move the UUID into teacher_notes so it's still recorded
+                    existing_notes = retry_record.get('teacher_notes') or ''
+                    retry_record['teacher_notes'] = (existing_notes + f" rubric_uuid:{retry_record.get('rubric_id')}").strip()
+                    retry_record['rubric_id'] = None
+                    try:
+                        retry_result = self.client.table('essay_scores').insert(retry_record).execute()
+                        if retry_result.data and len(retry_result.data) > 0:
+                            print(f"✓ Essay saved successfully on retry with ID: {retry_result.data[0].get('id')}")
+                            return {'success': True, 'data': retry_result.data[0]}
+                        else:
+                            return {'success': False, 'error': 'Failed to save to Supabase on retry'}
+                    except Exception as e2:
+                        print(f"❌ Retry failed: {e2}")
+                        return {'success': False, 'error': str(e2)}
+                return {'success': False, 'error': str(e)}
                 
         except Exception as e:
             print(f"❌ Error saving essay score: {e}")

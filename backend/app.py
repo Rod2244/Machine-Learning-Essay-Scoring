@@ -1,3 +1,5 @@
+# PATCH endpoint to update a rubric (moved after app definition)
+
 """
 Flask API for Essay Scoring
 Endpoints to score essays using the trained ML model
@@ -6,7 +8,7 @@ Endpoints to score essays using the trained ML model
 import os
 import sys
 from flask import Flask, request, jsonify
-from flask_cors import CORS
+from flask_cors import CORS, cross_origin
 import traceback
 from dotenv import load_dotenv
 
@@ -16,12 +18,19 @@ load_dotenv()
 from config import config
 from ocr_service import extract_text_from_image
 from scoring_service import scoring_service
-from supabase_client import supabase_service
 from auth_service import auth_service
+
+# Optional: Make supabase optional
+try:
+    from supabase_client import supabase_service
+    SUPABASE_AVAILABLE = True
+except ImportError:
+    SUPABASE_AVAILABLE = False
+    print("⚠️  Warning: Supabase not available (optional dependency)")
 
 
 app = Flask(__name__)
-CORS(app)  # Enable CORS for React frontend
+CORS(app, resources={r"/*": {"origins": "*"}}, supports_credentials=True)
 
 # Load trained model (handled by scoring_service)
 # MODEL_PATH = os.path.join(config.MODELS_DIR, 'essay_scorer.pkl')
@@ -102,6 +111,12 @@ def get_rubric_breakdown(total_score, rubric_id=1):
 
 @app.route('/api/signup', methods=['POST'])
 def signup():
+    if not SUPABASE_AVAILABLE:
+        return jsonify({
+            "success": False,
+            "error": "Authentication requires Supabase. Use /api/score for demo mode testing."
+        }), 503
+    
     data = request.get_json()
 
     user, error = auth_service.sign_up(
@@ -119,18 +134,75 @@ def signup():
         "user_id": user.id
     }), 200
 
+
+# --- Unified GET /api/rubrics endpoint ---
+@app.route('/api/rubrics', methods=['GET'])
+def get_all_rubrics():
+    """Return both static default rubrics and user-created rubrics from Supabase"""
+    # --- Static default rubrics ---
+    default_rubrics = [
+        {
+            'id': 1,
+            'title': 'Argumentative Essay',
+            'criteria': [
+                {'name': 'Thesis', 'points': 25},
+                {'name': 'Evidence', 'points': 25},
+                {'name': 'Structure', 'points': 30},
+                {'name': 'Grammar', 'points': 20}
+            ]
+        },
+        {
+            'id': 2,
+            'title': 'Expository Essay',
+            'criteria': [
+                {'name': 'Clarity', 'points': 30},
+                {'name': 'Organization', 'points': 25},
+                {'name': 'Research', 'points': 25},
+                {'name': 'Grammar', 'points': 20}
+            ]
+        },
+        {
+            'id': 3,
+            'title': 'Narrative Essay',
+            'criteria': [
+                {'name': 'Storytelling', 'points': 30},
+                {'name': 'Characters', 'points': 25},
+                {'name': 'Engagement', 'points': 25},
+                {'name': 'Language', 'points': 20}
+            ]
+        },
+        {
+            'id': 4,
+            'title': 'Research Paper',
+            'criteria': [
+                {'name': 'Research', 'points': 30},
+                {'name': 'Citations', 'points': 25},
+                {'name': 'Analysis', 'points': 25},
+                {'name': 'Rigor', 'points': 20}
+            ]
+        }
+    ]
+
+    # --- User-created rubrics from Supabase ---
+    user_rubrics = []
+    if SUPABASE_AVAILABLE:
+        try:
+            user_id = request.args.get("user_id")
+            query = supabase_service.client.table("rubrics").select("*")
+            if user_id:
+                query = query.eq("created_by", user_id)
+            result = query.execute()
+            if result.data:
+                user_rubrics = result.data
+        except Exception as e:
+            print(f"Error fetching user rubrics: {e}")
+
+    # Combine both lists (static first, then user rubrics)
+    all_rubrics = default_rubrics + user_rubrics
+    return jsonify(all_rubrics), 200
+
 @app.route('/api/login', methods=['POST'])
 def login():
-    data = request.get_json()
-
-    session, error = auth_service.login(
-        data.get("email"),
-        data.get("password")
-    )
-
-    if error:
-        return jsonify({"success": False, "error": error}), 401
-
     # Extract only serializable data from Supabase session
     try:
         user_id = session.user.id
@@ -138,9 +210,10 @@ def login():
         
         # Fetch user profile to get full_name
         try:
-            profile_response = supabase_service.client.table("profiles").select("full_name").eq("id", user_id).execute()
-            if profile_response.data and len(profile_response.data) > 0:
-                full_name = profile_response.data[0].get("full_name")
+            if SUPABASE_AVAILABLE:
+                profile_response = supabase_service.client.table("profiles").select("full_name").eq("id", user_id).execute()
+                if profile_response.data and len(profile_response.data) > 0:
+                    full_name = profile_response.data[0].get("full_name")
         except Exception as profile_error:
             print(f"⚠️ Could not fetch profile: {profile_error}")
         
@@ -177,6 +250,62 @@ def health():
         'status': 'ok',
         'model_loaded': scoring_service.scorer is not None
     }), 200
+
+
+# --- Rubric Endpoints ---
+@app.route('/api/rubrics', methods=['POST'])
+def create_rubric():
+    """
+    Create a new rubric and save to Supabase.
+    Request body:
+    {
+        "title": "Rubric Title",
+        "description": "Rubric description",
+        "icon": "📝",
+        "criteria": [
+            {"name": "Content", "points": 25},
+            {"name": "Organization", "points": 25}
+        ],
+        "created_by": "user-uuid"
+    }
+    """
+    if not SUPABASE_AVAILABLE:
+        return jsonify({"success": False, "error": "Supabase not available"}), 503
+
+    data = request.get_json()
+    if not data or not data.get("title") or not data.get("criteria"):
+        return jsonify({"success": False, "error": "Missing required fields"}), 400
+
+    try:
+        rubric_data = {
+            "title": data["title"],
+            "description": data.get("description", ""),
+            "icon": data.get("icon", ""),
+            "criteria": data["criteria"],
+            "is_custom": True,
+            "created_by": data.get("created_by")
+        }
+        result = supabase_service.client.table("rubrics").insert(rubric_data).execute()
+        return jsonify({"success": True, "rubric": result.data[0]}), 201
+    except Exception as e:
+        print(f"Error creating rubric: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route('/api/rubrics', methods=['GET'])
+def get_rubrics_api():
+    user_id = request.args.get("user_id")
+    if not SUPABASE_AVAILABLE:
+        return jsonify({"success": False, "error": "Supabase not available"}), 503
+    try:
+        query = supabase_service.client.table("rubrics").select("*")
+        if user_id:
+            query = query.eq("created_by", user_id)
+        result = query.execute()
+        return jsonify(result.data), 200
+    except Exception as e:
+        print(f"Error fetching rubrics: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
 
 
 @app.route('/api/ocr-extract', methods=['POST'])
@@ -332,12 +461,15 @@ def score_essay():
         print(f"   user_id is None: {essay_data.get('user_id') is None}")
         print(f"   user_id type: {type(essay_data.get('user_id'))}")
         
-        save_result = supabase_service.save_essay_score(essay_data)
-        if save_result['success']:
-            print(f"✓ Essay saved successfully!")
-            result['essay_id'] = save_result['data'].get('id')
+        if SUPABASE_AVAILABLE:
+            save_result = supabase_service.save_essay_score(essay_data)
+            if save_result['success']:
+                print(f"✓ Essay saved successfully!")
+                result['essay_id'] = save_result['data'].get('id')
+            else:
+                print(f"❌ Could not save essay: {save_result.get('error')}")
         else:
-            print(f"❌ Could not save essay: {save_result.get('error')}")
+            print(f"⚠️  Supabase not available, skipping database save")
         
         # ✅ DEBUG: Log what we're returning to frontend
         print(f"\n📤 Returning response to frontend:")
@@ -378,6 +510,12 @@ def get_essay_history():
             }), 400
         
         # Get essays for specific user
+        if not SUPABASE_AVAILABLE:
+            return jsonify({
+                'success': False,
+                'error': 'Supabase not available'
+            }), 503
+        
         essays = supabase_service.get_user_essay_scores(user_id, limit)
         
         return jsonify({
@@ -408,6 +546,9 @@ def update_essay(essay_id):
                 'error': 'No data provided'
             }), 400
         
+        if not SUPABASE_AVAILABLE:
+            return jsonify({'success': False, 'error': 'Supabase not available'}), 503
+        
         # Update essay in Supabase
         success = supabase_service.update_essay_score(essay_id, data)
         
@@ -436,6 +577,9 @@ def delete_essay(essay_id):
     Delete an essay from Supabase
     """
     try:
+        if not SUPABASE_AVAILABLE:
+            return jsonify({'success': False, 'error': 'Supabase not available'}), 503
+        
         success = supabase_service.delete_essay_score(essay_id)
         
         if success:
@@ -463,6 +607,9 @@ def get_class_analytics():
     Get class analytics from Supabase
     """
     try:
+        if not SUPABASE_AVAILABLE:
+            return jsonify({'success': False, 'error': 'Supabase not available'}), 503
+        
         analytics = supabase_service.get_class_analytics()
         
         return jsonify({
@@ -540,59 +687,7 @@ def batch_score():
 custom_rubrics = {}
 
 
-@app.route('/api/rubrics', methods=['GET'])
-def get_rubrics():
-    """Get available rubrics (including custom ones)"""
-    # Default rubrics
-    rubrics = [
-        {
-            'id': 1,
-            'title': 'Argumentative Essay',
-            'criteria': [
-                {'name': 'Thesis', 'points': 25},
-                {'name': 'Evidence', 'points': 25},
-                {'name': 'Structure', 'points': 30},
-                {'name': 'Grammar', 'points': 20}
-            ]
-        },
-        {
-            'id': 2,
-            'title': 'Expository Essay',
-            'criteria': [
-                {'name': 'Clarity', 'points': 30},
-                {'name': 'Organization', 'points': 25},
-                {'name': 'Research', 'points': 25},
-                {'name': 'Grammar', 'points': 20}
-            ]
-        },
-        {
-            'id': 3,
-            'title': 'Narrative Essay',
-            'criteria': [
-                {'name': 'Storytelling', 'points': 30},
-                {'name': 'Characters', 'points': 25},
-                {'name': 'Engagement', 'points': 25},
-                {'name': 'Language', 'points': 20}
-            ]
-        },
-        {
-            'id': 4,
-            'title': 'Research Paper',
-            'criteria': [
-                {'name': 'Research', 'points': 30},
-                {'name': 'Citations', 'points': 25},
-                {'name': 'Analysis', 'points': 25},
-                {'name': 'Rigor', 'points': 20}
-            ]
-        }
-    ]
-    
-    # Override with custom rubrics if they exist
-    for rubric in rubrics:
-        if rubric['id'] in custom_rubrics:
-            rubric['criteria'] = custom_rubrics[rubric['id']]
-    
-    return jsonify(rubrics), 200
+
 
 
 @app.route('/api/rubrics/save', methods=['POST'])
@@ -642,6 +737,40 @@ def save_rubric():
             'success': False,
             'error': str(e)
         }), 500
+
+
+
+@app.route('/api/rubrics/<rubric_id>', methods=['PATCH', 'OPTIONS'])
+@cross_origin(origins="*", allow_headers=["Content-Type", "Authorization"], methods=["PATCH", "OPTIONS"])
+def update_rubric(rubric_id):
+    if request.method == 'OPTIONS':
+        # Preflight request
+        return '', 204
+    if not SUPABASE_AVAILABLE:
+        return jsonify({"success": False, "error": "Supabase not available"}), 503
+    data = request.get_json()
+    if not data:
+        return jsonify({"success": False, "error": "Missing rubric data"}), 400
+    try:
+        update_fields = {}
+        for field in ["title", "description", "icon", "criteria"]:
+            if field in data:
+                update_fields[field] = data[field]
+        if not update_fields:
+            return jsonify({"success": False, "error": "No valid fields to update"}), 400
+        print(f"[PATCH /api/rubrics/{{rubric_id}}] rubric_id: {rubric_id}")
+        print(f"[PATCH /api/rubrics/{{rubric_id}}] update_fields: {update_fields}")
+        result = supabase_service.client.table("rubrics").update(update_fields).eq("id", rubric_id).execute()
+        print(f"[PATCH /api/rubrics/{{rubric_id}}] Supabase result: {result}")
+        if hasattr(result, 'data') and result.data:
+            print(f"[PATCH /api/rubrics/{{rubric_id}}] Updated rubric: {result.data[0]}")
+            return jsonify({"success": True, "rubric": result.data[0]}), 200
+        else:
+            print(f"[PATCH /api/rubrics/{{rubric_id}}] No rubric updated. Supabase returned: {getattr(result, 'data', None)}")
+            return jsonify({"success": False, "error": "Rubric not found or not updated"}), 404
+    except Exception as e:
+        print(f"Error updating rubric: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
 
 
 @app.errorhandler(404)

@@ -24,11 +24,14 @@ const ScorerPage = () => {
 
   // ✅ Debug: Check localStorage when component mounts
   useEffect(() => {
-    console.log('📖 ScorerPage mounted - checking localStorage:');
-    console.log('   user_id:', localStorage.getItem('user_id'));
-    console.log('   user_full_name:', localStorage.getItem('user_full_name'));
-    console.log('   session_token exists:', !!localStorage.getItem('session_token'));
-    console.log('   All localStorage keys:', Object.keys(localStorage));
+    console.log("📖 ScorerPage mounted - checking localStorage:");
+    console.log("   user_id:", localStorage.getItem("user_id"));
+    console.log("   user_full_name:", localStorage.getItem("user_full_name"));
+    console.log(
+      "   session_token exists:",
+      !!localStorage.getItem("session_token"),
+    );
+    console.log("   All localStorage keys:", Object.keys(localStorage));
   }, []);
 
   // Load available rubrics from backend on component mount
@@ -40,7 +43,12 @@ const ScorerPage = () => {
           const data = await response.json();
           setRubrics(data);
           if (data.length > 0) {
-            setSelectedRubricId(data[0].id);
+            const firstId = data[0].id;
+            // keep numeric ids as numbers, UUIDs as strings
+            const parsedId = /^\d+$/.test(String(firstId))
+              ? Number(firstId)
+              : String(firstId);
+            setSelectedRubricId(parsedId);
           }
         }
       } catch (err) {
@@ -54,7 +62,10 @@ const ScorerPage = () => {
   }, [apiUrl]);
 
   const selectedRubric =
-    rubrics.find((r) => r.id === selectedRubricId) || rubrics[0];
+    rubrics.find(
+      (r) =>
+        r.id === selectedRubricId || String(r.id) === String(selectedRubricId),
+    ) || rubrics[0];
 
   const clearEssayPrompt = () => setEssayPrompt("");
 
@@ -73,7 +84,7 @@ const ScorerPage = () => {
     // UI/UX: Clear previous errors and show loading
     setIsLoading(true);
     setError(null);
-    
+
     // Optional: Give the user feedback that the AI is working
     const originalPlaceholder = "AI is transcribing your photo...";
     setStudentResponse(originalPlaceholder);
@@ -88,7 +99,7 @@ const ScorerPage = () => {
       });
 
       const data = await response.json();
-      
+
       if (data.success) {
         setStudentResponse(data.extracted_text);
         console.log("✓ OCR Success!");
@@ -97,7 +108,7 @@ const ScorerPage = () => {
         setError(data.error || "OCR failed to recognize text.");
       }
     } catch (err) {
-      setStudentResponse(""); 
+      setStudentResponse("");
       setError("Failed to connect to OCR service. Check your backend.");
     } finally {
       setIsLoading(false);
@@ -122,26 +133,33 @@ const ScorerPage = () => {
 
     try {
       // Get user_id from localStorage (set during login)
-      const user_id = localStorage.getItem('user_id');
-      const user_full_name = localStorage.getItem('user_full_name');
-      const session_token = localStorage.getItem('session_token');
-      
+      const user_id = localStorage.getItem("user_id");
+      const user_full_name = localStorage.getItem("user_full_name");
+      const session_token = localStorage.getItem("session_token");
+
       console.log("📝 Scoring essay...");
       console.log("   user_id:", user_id);
       console.log("   user_full_name:", user_full_name);
       console.log("   session_token exists:", !!session_token);
       console.log("   localStorage keys:", Object.keys(localStorage));
-      
+
       // Validate user_id exists and is a valid UUID
-      if (!user_id || user_id === 'null' || user_id === 'undefined' || user_id.length === 0) {
+      if (
+        !user_id ||
+        user_id === "null" ||
+        user_id === "undefined" ||
+        user_id.length === 0
+      ) {
         console.error("❌ ERROR: user_id is missing or invalid!");
         console.error("   localStorage user_id:", user_id);
         console.error("   localStorage contents:", {
-          user_id: localStorage.getItem('user_id'),
-          user_full_name: localStorage.getItem('user_full_name'),
-          session_token: localStorage.getItem('session_token')
+          user_id: localStorage.getItem("user_id"),
+          user_full_name: localStorage.getItem("user_full_name"),
+          session_token: localStorage.getItem("session_token"),
         });
-        setError("❌ Session expired. Please log in again to save your essay scores.");
+        setError(
+          "❌ Session expired. Please log in again to save your essay scores.",
+        );
         setIsLoading(false);
         return;
       }
@@ -150,11 +168,11 @@ const ScorerPage = () => {
         prompt: essayPrompt,
         response: studentResponse,
         rubric_id: selectedRubricId,
-        user_id: user_id,  // ✓ Include user_id
+        user_id: user_id, // ✓ Include user_id
         student_name: user_full_name || "Student",
-        essay_type: selectedRubric?.title || "Essay"
+        essay_type: selectedRubric?.title || "Essay",
       };
-      
+
       console.log("📤 Sending request to backend:", requestBody);
 
       const response = await fetch(`${apiUrl}/api/score`, {
@@ -232,61 +250,72 @@ const ScorerPage = () => {
               </div>
             </div>
 
-          {/* Updated Student Response Section */}
-          <div className="input-section">
-            <div className="section-label" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span>Student Response</span>
-              <div className="ocr-buttons">
-                <button 
-                  type="button" 
-                  className="ocr-btn" 
-                  onClick={() => {
-                    if (fileInputRef.current) {
-                      fileInputRef.current.click();
-                    } else {
-                      console.error("File input ref is null");
-                    }
-                  }}
-                  disabled={isLoading}
-                >
-                  📷 Upload File/Photo/PDF
-                </button>
+            {/* Updated Student Response Section */}
+            <div className="input-section">
+              <div
+                className="section-label"
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                }}
+              >
+                <span>Student Response</span>
+                <div className="ocr-buttons">
+                  <button
+                    type="button"
+                    className="ocr-btn"
+                    onClick={() => {
+                      if (fileInputRef.current) {
+                        fileInputRef.current.click();
+                      } else {
+                        console.error("File input ref is null");
+                      }
+                    }}
+                    disabled={isLoading}
+                  >
+                    📷 Upload File/Photo/PDF
+                  </button>
+                </div>
               </div>
-            </div>
-            
-            <input 
-              type="file" 
-              ref={fileInputRef} 
-              style={{display: 'none'}} 
-              accept="image/*,.pdf" 
-              onChange={handleFileUpload} 
-            />
-            
-            <textarea
-              className={`student-response-textarea ${dragActive ? "drag-active" : ""}`}
-              placeholder="Enter student response here or drag & drop a file..."
-              value={studentResponse}
-              onChange={(e) => setStudentResponse(e.target.value)}
-              onDragOver={(e) => { e.preventDefault(); setDragActive(true); }}
-              onDragLeave={() => setDragActive(false)}
-              onDrop={(e) => {
-                e.preventDefault();
-                setDragActive(false);
-                const file = e.dataTransfer.files[0];
-                if (!file) return;
 
-                // UX Improvement: If they drop an image, trigger OCR automatically!
-                if (file.type.startsWith("image/")) {
-                  const fakeEvent = { target: { files: [file] } };
-                  handleFileUpload(fakeEvent);
-                } else if (file.type === "text/plain") {
-                  const reader = new FileReader();
-                  reader.onload = (event) => setStudentResponse(event.target.result);
-                  reader.readAsText(file);
-                }
-              }}
-            />
-          </div>
+              <input
+                type="file"
+                ref={fileInputRef}
+                style={{ display: "none" }}
+                accept="image/*,.pdf"
+                onChange={handleFileUpload}
+              />
+
+              <textarea
+                className={`student-response-textarea ${dragActive ? "drag-active" : ""}`}
+                placeholder="Enter student response here or drag & drop a file..."
+                value={studentResponse}
+                onChange={(e) => setStudentResponse(e.target.value)}
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  setDragActive(true);
+                }}
+                onDragLeave={() => setDragActive(false)}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  setDragActive(false);
+                  const file = e.dataTransfer.files[0];
+                  if (!file) return;
+
+                  // UX Improvement: If they drop an image, trigger OCR automatically!
+                  if (file.type.startsWith("image/")) {
+                    const fakeEvent = { target: { files: [file] } };
+                    handleFileUpload(fakeEvent);
+                  } else if (file.type === "text/plain") {
+                    const reader = new FileReader();
+                    reader.onload = (event) =>
+                      setStudentResponse(event.target.result);
+                    reader.readAsText(file);
+                  }
+                }}
+              />
+            </div>
 
             {/* Bottom Buttons */}
             <div className="button-group">
@@ -330,12 +359,16 @@ const ScorerPage = () => {
               <label htmlFor="rubric-select">Select Rubric:</label>
               <select
                 id="rubric-select"
-                value={selectedRubricId}
-                onChange={(e) => setSelectedRubricId(Number(e.target.value))}
+                value={String(selectedRubricId)}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  const parsed = /^\d+$/.test(val) ? Number(val) : val;
+                  setSelectedRubricId(parsed);
+                }}
                 disabled={isLoading}
               >
                 {rubrics.map((rubric) => (
-                  <option key={rubric.id} value={rubric.id}>
+                  <option key={rubric.id} value={String(rubric.id)}>
                     {rubric.title}
                   </option>
                 ))}
@@ -377,36 +410,41 @@ const ScorerPage = () => {
                 {selectedRubric &&
                   selectedRubric.criteria.map((criterion, idx) => {
                     // Debug: log the entire scoring result
-                    console.log('Full scoring result:', scoringResult);
-                    console.log('Breakdown:', scoringResult?.breakdown);
-                    console.log('Criterion name:', criterion.name);
-                    
+                    console.log("Full scoring result:", scoringResult);
+                    console.log("Breakdown:", scoringResult?.breakdown);
+                    console.log("Criterion name:", criterion.name);
+
                     // Safe check for breakdown - access directly from scoringResult
                     if (!scoringResult?.breakdown) {
-                      console.warn('No breakdown found in scoring result');
+                      console.warn("No breakdown found in scoring result");
                       return null; // Skip this criterion
                     }
-                    
+
                     // Try multiple possible key formats
                     const possibleKeys = [
                       criterion.name,
                       criterion.name.toLowerCase(),
                       criterion.name.toUpperCase(),
-                      criterion.name.replace(/\s+/g, '_'),
-                      criterion.name.replace(/\s+/g, '').toLowerCase()
+                      criterion.name.replace(/\s+/g, "_"),
+                      criterion.name.replace(/\s+/g, "").toLowerCase(),
                     ];
-                    
+
                     let score = 0;
                     for (const key of possibleKeys) {
                       if (scoringResult.breakdown[key] !== undefined) {
                         score = scoringResult.breakdown[key];
-                        console.log(`✓ Found score for ${criterion.name}: ${score}`);
+                        console.log(
+                          `✓ Found score for ${criterion.name}: ${score}`,
+                        );
                         break;
                       }
                     }
-                    
+
                     if (score === 0) {
-                      console.warn(`⚠️ No score found for ${criterion.name} in breakdown:`, scoringResult.breakdown);
+                      console.warn(
+                        `⚠️ No score found for ${criterion.name} in breakdown:`,
+                        scoringResult.breakdown,
+                      );
                     }
                     return (
                       <div className="rubric-card" key={idx}>
@@ -439,17 +477,21 @@ const ScorerPage = () => {
                 </div>
                 <div className="confidence-meter">
                   <p className="confidence-label">
-                    AI Confidence: {((scoringResult.data?.confidence || 0) * 100).toFixed(1)}
-                    %
+                    AI Confidence:{" "}
+                    {((scoringResult.data?.confidence || 0) * 100).toFixed(1)}%
                   </p>
                   <div className="confidence-bar">
                     <div
                       className="confidence-fill"
-                      style={{ width: `${(scoringResult.data?.confidence || 0) * 100}%` }}
+                      style={{
+                        width: `${(scoringResult.data?.confidence || 0) * 100}%`,
+                      }}
                     />
                   </div>
                 </div>
-                <p className="overall-feedback">{scoringResult.data?.feedback || ''}</p>
+                <p className="overall-feedback">
+                  {scoringResult.data?.feedback || ""}
+                </p>
               </div>
             </>
           )}

@@ -23,7 +23,7 @@ class EssayScoringService:
     
     def score_essay(self, essay_text, prompt="", rubric_id=1):
         """
-        Score an essay using the trained ML model
+        Score an essay using the trained ML model (XGBoost with advanced features)
         
         Args:
             essay_text: The student's essay response
@@ -40,169 +40,197 @@ class EssayScoringService:
             return {"success": False, "error": "Empty essay text"}
         
         try:
-            # Topic-aware scoring
-            topic_relevance_score = self.calculate_topic_relevance(essay_text, prompt)
-            
-            # Get base ML score
+            # Get ML model prediction
             prediction = self.scorer.predict(essay_text)
             base_score = prediction['score']
             confidence = prediction['confidence']
             
+            # Calculate topic relevance (if prompt provided)
+            topic_relevance = self.calculate_topic_relevance(essay_text, prompt)
+            
             # Adjust score based on topic relevance
-            if topic_relevance_score < 30:  # Very off-topic
-                base_score = max(0, base_score - 40)  # Heavy penalty
-            elif topic_relevance_score < 60:  # Somewhat off-topic  
-                base_score = max(0, base_score - 20)  # Moderate penalty
+            score = base_score
+            if topic_relevance < 30:  # Very off-topic
+                score = max(0, score - 30)  # Penalize significantly
+            elif topic_relevance < 60:  # Somewhat off-topic
+                score = max(0, score - 15)  # Moderate penalty
             # On-topic essays keep their score
             
-            # Improve scoring based on essay quality indicators
-            import random
+            # Ensure score is in valid range
+            score = max(0, min(100, score))
             
-            # Bonus points for well-structured essays
-            structure_bonus = 0
-            if len(essay_text) > 200:  # Good length
-                structure_bonus += 8
-            if essay_text.count('.') > 5:  # Multiple sentences
-                structure_bonus += 8
-            if any(word in essay_text.lower() for word in ['conclusion', 'in conclusion', 'therefore', 'thus']):  # Has conclusion
-                structure_bonus += 8
-            if any(word in essay_text.lower() for word in ['first', 'second', 'third', 'finally', 'next']):  # Organized
-                structure_bonus += 8
-            if len(essay_text.split()) > 100:  # Good word count
-                structure_bonus += 8
-            if essay_text.count(',') > 5:  # Complex sentences
-                structure_bonus += 6
-            
-            # Add some variety but less drastic (±5 points)
-            score = max(0, min(100, base_score + structure_bonus + random.randint(-5, 5)))
-            
-            # Create dynamic breakdown based on rubric
-            import random
-            
-            # Import custom rubrics from app.py
-            from app import custom_rubrics
-            
-            breakdown = {}
-            
-            # Check if this is a custom rubric
-            if rubric_id in custom_rubrics:
-                # Custom rubric - create breakdown dynamically
-                custom_criteria = custom_rubrics[rubric_id]
-                total_points = sum(c['points'] for c in custom_criteria)
-                
-                for criterion in custom_criteria:
-                    criterion_name = criterion['name']
-                    criterion_points = criterion['points']
-                    
-                    # Calculate score proportionally with some randomness
-                    base_score = int((score * criterion_points) / total_points)
-                    final_score = max(1, min(criterion_points, base_score + random.randint(-3, 5)))
-                    breakdown[criterion_name] = final_score
-                    
-            else:
-                # Default rubric - use hardcoded logic
-                if rubric_id == 2:  # Expository Essay
-                    breakdown = {
-                        "Clarity": max(5, min(30, score // 3 + random.randint(-5, 10))),
-                        "Organization": max(5, min(25, score // 4 + random.randint(-3, 7))),
-                        "Research": max(5, min(25, score // 4 + random.randint(-3, 7))),
-                        "Grammar": max(5, min(20, score // 5 + random.randint(-2, 8)))
-                    }
-                elif rubric_id == 3:  # Narrative Essay
-                    breakdown = {
-                        "Storytelling": max(5, min(30, score // 3 + random.randint(-5, 10))),
-                        "Characters": max(5, min(25, score // 4 + random.randint(-3, 7))),
-                        "Engagement": max(5, min(25, score // 4 + random.randint(-5, 5))),
-                        "Language": max(5, min(20, score // 5 + random.randint(-2, 8)))
-                    }
-                elif rubric_id == 4:  # Research Paper
-                    breakdown = {
-                        "Research": max(5, min(30, score // 3 + random.randint(-5, 10))),
-                        "Citations": max(5, min(25, score // 4 + random.randint(-3, 7))),
-                        "Analysis": max(5, min(25, score // 4 + random.randint(-3, 7))),
-                        "Academic Rigor": max(5, min(20, score // 5 + random.randint(-2, 8)))
-                    }
-                else:  # Argumentative Essay (default)
-                    breakdown = {
-                        "Thesis": max(5, min(25, score // 4 + random.randint(-5, 5))),
-                        "Evidence": max(5, min(25, score // 4 + random.randint(-3, 7))),
-                        "Structure": max(5, min(30, score // 3 + random.randint(-5, 10))),
-                        "Grammar": max(5, min(20, score // 5 + random.randint(-2, 8)))
-                    }
-            
-            # Use the confidence from the model
+            # Calculate breakdown based on score (deterministic, no randomness)
+            breakdown = self._calculate_breakdown(score, rubric_id)
+
+            # DEBUG: log rubric_id and breakdown for troubleshooting custom rubrics
+            try:
+                print(f"[ScoringService] rubric_id passed: {rubric_id}")
+                print(f"[ScoringService] breakdown computed: {breakdown}")
+            except Exception:
+                pass
             
             # Generate feedback
-            if score >= 85:
-                feedback = "Excellent essay with strong organization and comprehensive content"
-            elif score >= 75:
-                feedback = "Good essay with clear structure and solid content"
-            elif score >= 65:
-                feedback = "Satisfactory essay with adequate organization and content"
-            elif score >= 50:
-                feedback = "Fair essay that needs improvement in structure and depth"
-            else:
-                feedback = "Essay needs significant work on organization and content"
+            feedback = self._generate_feedback(score)
             
             result = {
                 "success": True,
-                "score": score,
-                "category": score // 20,
-                "confidence": confidence,
+                "score": int(score),
+                "category": int(score // 20),
+                "confidence": float(confidence),
                 "breakdown": breakdown,
-                "feedback": feedback
+                "feedback": feedback,
+                "topic_relevance": float(topic_relevance)
             }
-            
-            # Debug: print what we're returning
-            print(f"🔍 Returning scoring result: {result}")
             
             # Save to Supabase if available
             try:
                 from supabase_client import supabase_service
                 
-                # Get essay type based on rubric_id
-                def get_essay_type_by_rubric_id(rubric_id):
-                    rubric_types = {
-                        1: 'Argumentative Essay',
-                        2: 'Expository Essay', 
-                        3: 'Narrative Essay',
-                        4: 'Research Paper'
-                    }
-                    return rubric_types.get(rubric_id, 'Essay')
-                
-                # Prepare data for Supabase
                 essay_data = {
-                    'student_id': 'anonymous',  # You can add student ID later
+                    'student_id': 'anonymous',
                     'student_name': 'Anonymous Student',
                     'essay_title': prompt[:50] + '...' if len(prompt) > 50 else prompt or 'Untitled Essay',
-                    'essay_type': get_essay_type_by_rubric_id(rubric_id),
+                    'essay_type': self._get_essay_type_by_rubric_id(rubric_id),
                     'essay_prompt': prompt,
                     'essay_text': essay_text,
-                    'total_score': score,
+                    'total_score': int(score),
                     'max_score': 100,
                     'breakdown': breakdown,
-                    'confidence': confidence,
+                    'confidence': float(confidence),
                     'feedback': feedback,
                     'rubric_id': rubric_id,
-                    'topic_relevance': topic_relevance_score if 'topic_relevance_score' in locals() else 0.0,
+                    'topic_relevance': float(topic_relevance),
                     'status': 'Graded',
                     'teacher_notes': ''
                 }
-                
-                # ✅ NOTE: Saving to Supabase is now handled in app.py /api/score endpoint
-                # This ensures user_id is properly included
-                # The scoring_service should NOT auto-save without user_id
-                # print("✅ Essay score saved to Supabase")
-                
             except Exception as e:
                 print(f"⚠️ Failed to save to Supabase: {e}")
-                # Continue even if Supabase fails
             
             return result
             
         except Exception as e:
             print(f"Scoring error: {e}")
+            import traceback
+            traceback.print_exc()
             return {"success": False, "error": f"Scoring failed: {str(e)}"}
+    
+    def _calculate_breakdown(self, score, rubric_id):
+        """
+        Calculate deterministic score breakdown based on rubric type
+        No randomness - same essay = same breakdown always
+        """
+        breakdown = {}
+        
+        try:
+            from app import custom_rubrics
+
+            # First, check in-memory custom rubrics (keys may be int or str)
+            found_custom = None
+            for k, v in custom_rubrics.items():
+                if str(k) == str(rubric_id):
+                    found_custom = v
+                    break
+
+            if found_custom is not None:
+                custom_criteria = found_custom
+                total_points = sum(c.get('points', 0) for c in custom_criteria)
+
+                for criterion in custom_criteria:
+                    criterion_name = criterion.get('name')
+                    criterion_points = criterion.get('points', 0)
+
+                    # Allocate points proportionally
+                    criterion_score = int((score * criterion_points) / 100)
+                    criterion_score = max(0, min(criterion_points, criterion_score))
+                    breakdown[criterion_name] = criterion_score
+            else:
+                # If not in memory, try Supabase (user-created rubrics stored in DB)
+                tried_db = False
+                try:
+                    from supabase_client import supabase_service
+                    if supabase_service and getattr(supabase_service, 'client', None):
+                        q = supabase_service.client.table('rubrics').select('criteria').eq('id', str(rubric_id)).execute()
+                        if getattr(q, 'data', None):
+                            db_criteria = q.data[0].get('criteria', [])
+                            if db_criteria:
+                                tried_db = True
+                                for criterion in db_criteria:
+                                    cname = criterion.get('name')
+                                    cpoints = criterion.get('points', 0)
+                                    cscore = int((score * cpoints) / 100)
+                                    cscore = max(0, min(cpoints, cscore))
+                                    breakdown[cname] = cscore
+                except Exception:
+                    tried_db = False
+
+                if not tried_db:
+                    # Default rubric types (fallback)
+                    if str(rubric_id) == '2' or rubric_id == 2:  # Expository Essay
+                        breakdown = {
+                            "Clarity": int(score * 0.30),
+                            "Organization": int(score * 0.25),
+                            "Research": int(score * 0.25),
+                            "Grammar": int(score * 0.20)
+                        }
+                    elif str(rubric_id) == '3' or rubric_id == 3:  # Narrative Essay
+                        breakdown = {
+                            "Storytelling": int(score * 0.30),
+                            "Characters": int(score * 0.25),
+                            "Engagement": int(score * 0.25),
+                            "Language": int(score * 0.20)
+                        }
+                    elif str(rubric_id) == '4' or rubric_id == 4:  # Research Paper
+                        breakdown = {
+                            "Research": int(score * 0.30),
+                            "Citations": int(score * 0.25),
+                            "Analysis": int(score * 0.25),
+                            "Academic Rigor": int(score * 0.20)
+                        }
+                    else:  # Argumentative Essay (default)
+                        breakdown = {
+                            "Thesis": int(score * 0.25),
+                            "Evidence": int(score * 0.25),
+                            "Structure": int(score * 0.30),
+                            "Grammar": int(score * 0.20)
+                        }
+        except Exception:
+            # Fallback if something unexpected fails
+            breakdown = {
+                "Thesis": int(score * 0.25),
+                "Evidence": int(score * 0.25),
+                "Structure": int(score * 0.30),
+                "Grammar": int(score * 0.20)
+            }
+        
+        return breakdown
+    
+    def _generate_feedback(self, score):
+        """Generate feedback based on score"""
+        if score >= 90:
+            return "Excellent essay with outstanding organization, depth, and clarity"
+        elif score >= 80:
+            return "Very good essay with strong content and clear structure"
+        elif score >= 70:
+            return "Good essay with solid organization and comprehensive content"
+        elif score >= 60:
+            return "Satisfactory essay with adequate structure and content"
+        elif score >= 50:
+            return "Fair essay with some good elements but needs improvement"
+        elif score >= 40:
+            return "Essay needs significant improvement in organization and content"
+        else:
+            return "Essay requires major revisions to meet standards"
+    
+    def _get_essay_type_by_rubric_id(self, rubric_id):
+        """Get essay type name by rubric ID"""
+        rubric_types = {
+            1: 'Argumentative Essay',
+            2: 'Expository Essay',
+            3: 'Narrative Essay',
+            4: 'Research Paper'
+        }
+        return rubric_types.get(rubric_id, 'Essay')
+
 
     def calculate_topic_relevance(self, essay_text, essay_prompt):
         """

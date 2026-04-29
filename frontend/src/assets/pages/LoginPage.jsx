@@ -1,7 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import '../css/LoginPage.css';
 
 const LoginPage = ({ onLogin }) => {
+  const navigate = useNavigate();
+  const location = useLocation();
   const [mode, setMode] = useState('login'); // 'login' or 'signup'
   const [formData, setFormData] = useState({
     name: '',
@@ -17,6 +20,15 @@ const LoginPage = ({ onLogin }) => {
   const [successMessage, setSuccessMessage] = useState('');
 
   const API_BASE_URL = 'http://localhost:5000'; // Change if backend is on different port
+
+  // Sync mode with URL
+  useEffect(() => {
+    if (location.pathname === '/signup') {
+      setMode('signup');
+    } else {
+      setMode('login');
+    }
+  }, [location.pathname]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -149,7 +161,8 @@ const LoginPage = ({ onLogin }) => {
   };
 
   const switchMode = () => {
-    setMode(prev => prev === 'login' ? 'signup' : 'login');
+    const newMode = mode === 'login' ? 'signup' : 'login';
+    navigate(newMode === 'signup' ? '/signup' : '/login');
     setFormData({ name: '', email: '', password: '', confirmPassword: '' });
     setErrors({});
     setApiError('');
@@ -164,7 +177,7 @@ const LoginPage = ({ onLogin }) => {
 
       <div className="login-card">
         {/* Back Button - Inside container */}
-        <button className="login-back-btn" onClick={() => window.dispatchEvent(new CustomEvent('showLanding'))} title="Back to Landing Page">
+        <button className="login-back-btn" onClick={() => navigate('/')} title="Back to Landing Page">
           ← Back
         </button>
 
@@ -178,7 +191,7 @@ const LoginPage = ({ onLogin }) => {
         <div className="mode-toggle">
           <button
             className={`toggle-btn ${mode === 'login' ? 'active' : ''}`}
-            onClick={() => setMode('login')}
+            onClick={() => navigate('/login')}
             type="button"
             disabled={successMessage ? true : false}
           >
@@ -186,7 +199,7 @@ const LoginPage = ({ onLogin }) => {
           </button>
           <button
             className={`toggle-btn ${mode === 'signup' ? 'active' : ''}`}
-            onClick={() => setMode('signup')}
+            onClick={() => navigate('/signup')}
             type="button"
             disabled={successMessage ? true : false}
           >

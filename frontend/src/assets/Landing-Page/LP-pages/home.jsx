@@ -1,4 +1,5 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import "../LP-css/home.css";
 import TopBar from "../LP-components/top-bar";
 import homeBgImage from "../../homepage.png.png";
@@ -9,6 +10,12 @@ import writeessayIcon from "../../writeessay.png";
 import resultsIcon from "../../results.png";
 
 export default function Home({ onNavigate }) {
+  const navigate = useNavigate();
+
+  const handleTryNow = () => {
+    navigate('/login');
+  };
+
   return (
     <div className="home">
       <TopBar onNavigate={onNavigate} currentPage="home" />
@@ -23,7 +30,7 @@ export default function Home({ onNavigate }) {
             Easily evaluate essays based on your own criteria. 
             Input a question, write an essay, and get a score instantly.
           </p>
-          <button className="primary-btn" onClick={() => window.dispatchEvent(new CustomEvent('showMainApp'))}>Try Now</button>
+          <button className="primary-btn" onClick={handleTryNow}>Try Now</button>
         </div>
         
         {/* DECORATIVE IMAGE */}

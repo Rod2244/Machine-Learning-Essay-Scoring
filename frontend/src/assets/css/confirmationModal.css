@@ -286,3 +286,28 @@
 .modal-save-btn:active {
   transform: scale(0.97);
 }
+
+/* === READ-ONLY STYLES === */
+.rubric-name-input:disabled,
+.rubric-score-input:disabled {
+  background-color: #f9f4f3;
+  color: var(--secondary-brown);
+  opacity: 0.7;
+  cursor: not-allowed;
+  border-color: rgba(126, 100, 81, 0.1);
+}
+
+.rubric-name-input:disabled::placeholder,
+.rubric-score-input:disabled::placeholder {
+  color: rgba(126, 100, 81, 0.4);
+}
+
+.rubric-remove-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.modal-add-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

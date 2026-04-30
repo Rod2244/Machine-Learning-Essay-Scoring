@@ -6,6 +6,8 @@ const ConfirmationModal = ({
   onClose,
   onSave,
   selectedRubricId = 1,
+  selectedRubricTitle = "",
+  isReadOnly = false,
   apiUrl = "http://localhost:5000",
 }) => {
   const [rubrics, setRubrics] = useState([
@@ -52,24 +54,28 @@ const ConfirmationModal = ({
   };
 
   const handleNameChange = (id, value) => {
+    if (isReadOnly) return;
     setRubrics((prev) =>
       prev.map((r) => (r.id === id ? { ...r, name: value } : r)),
     );
   };
 
   const handleScoreChange = (id, value) => {
+    if (isReadOnly) return;
     setRubrics((prev) =>
       prev.map((r) => (r.id === id ? { ...r, score: value } : r)),
     );
   };
 
   const handleMaxScoreChange = (id, value) => {
+    if (isReadOnly) return;
     setRubrics((prev) =>
       prev.map((r) => (r.id === id ? { ...r, maxScore: Number(value) } : r)),
     );
   };
 
   const handleAddRubric = () => {
+    if (isReadOnly) return;
     const newId = rubrics.length ? rubrics[rubrics.length - 1].id + 1 : 1;
     setRubrics((prev) => [
       ...prev,
@@ -78,6 +84,7 @@ const ConfirmationModal = ({
   };
 
   const handleRemoveRubric = (id) => {
+    if (isReadOnly) return;
     setRubrics((prev) => prev.filter((r) => r.id !== id));
   };
 
@@ -122,7 +129,9 @@ const ConfirmationModal = ({
       <div className="modal-container" onClick={(e) => e.stopPropagation()}>
         {/* Header */}
         <div className="modal-header">
-          <h2 className="modal-title">Edit Rubric Criteria</h2>
+          <h2 className="modal-title">
+            {isReadOnly ? "View" : "Edit"} Rubric Criteria
+          </h2>
           <button
             className="modal-close-btn"
             onClick={onClose}
@@ -133,8 +142,9 @@ const ConfirmationModal = ({
         </div>
 
         <p className="modal-subtitle">
-          Customize rubric categories, enter the student's score, and set the
-          maximum score.
+          {isReadOnly
+            ? "🔒 Read-Only Rubric — You can view this rubric's criteria but cannot modify it."
+            : "Customize rubric categories, enter the student's score, and set the maximum score."}
         </p>
 
         {/* Column Labels */}
@@ -154,7 +164,7 @@ const ConfirmationModal = ({
                 placeholder="Criteria name..."
                 value={rubric.name}
                 onChange={(e) => handleNameChange(rubric.id, e.target.value)}
-                disabled={saving}
+                disabled={saving || isReadOnly}
               />
               <div className="rubric-score-wrapper">
                 <input
@@ -165,7 +175,7 @@ const ConfirmationModal = ({
                   max={rubric.maxScore}
                   value={rubric.score}
                   onChange={(e) => handleScoreChange(rubric.id, e.target.value)}
-                  disabled={saving}
+                  disabled={saving || isReadOnly}
                 />
                 <span className="score-slash">/</span>
                 <input
@@ -177,14 +187,14 @@ const ConfirmationModal = ({
                   onChange={(e) =>
                     handleMaxScoreChange(rubric.id, e.target.value)
                   }
-                  disabled={saving}
+                  disabled={saving || isReadOnly}
                 />
               </div>
               <button
                 className="rubric-remove-btn"
                 onClick={() => handleRemoveRubric(rubric.id)}
                 title="Remove criteria"
-                disabled={saving}
+                disabled={saving || isReadOnly}
               >
                 🗑️
               </button>
@@ -193,13 +203,15 @@ const ConfirmationModal = ({
         </div>
 
         {/* Add Criteria */}
-        <button
-          className="modal-add-btn"
-          onClick={handleAddRubric}
-          disabled={saving}
-        >
-          + Add Criteria
-        </button>
+        {!isReadOnly && (
+          <button
+            className="modal-add-btn"
+            onClick={handleAddRubric}
+            disabled={saving}
+          >
+            + Add Criteria
+          </button>
+        )}
 
         {/* Footer Buttons */}
         <div className="modal-footer">
@@ -208,15 +220,17 @@ const ConfirmationModal = ({
             onClick={onClose}
             disabled={saving}
           >
-            Cancel
+            {isReadOnly ? "Close" : "Cancel"}
           </button>
-          <button
-            className="modal-save-btn"
-            onClick={handleSave}
-            disabled={saving}
-          >
-            {saving ? "Saving..." : "Save Changes"}
-          </button>
+          {!isReadOnly && (
+            <button
+              className="modal-save-btn"
+              onClick={handleSave}
+              disabled={saving}
+            >
+              {saving ? "Saving..." : "Save Changes"}
+            </button>
+          )}
         </div>
       </div>
     </div>

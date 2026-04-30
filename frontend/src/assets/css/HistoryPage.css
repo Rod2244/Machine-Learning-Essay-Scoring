@@ -201,7 +201,8 @@
 .history-table-container {
   background: white;
   border-radius: 16px;
-  overflow: hidden;
+  overflow-y: auto;
+  overflow-x: hidden;
   box-shadow: 0 2px 12px rgba(80, 59, 47, 0.08);
   border: 1px solid rgba(126, 100, 81, 0.1);
   flex: 1;
@@ -476,7 +477,7 @@
   border-radius: 20px;
   padding: 28px;
   width: 100%;
-  max-width: 460px;
+  max-width: 1000px;
   box-shadow: 0 20px 60px rgba(80, 59, 47, 0.2);
   display: flex;
   flex-direction: column;
@@ -624,6 +625,102 @@
   margin: 0;
 }
 
+/* Essay Section Styles */
+.breakdown-essay-section {
+  margin: 20px 0;
+  padding: 15px 0;
+  border-top: 1px solid #e0e0e0;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+/* Landscape Layout Container */
+.breakdown-content-container {
+  display: flex;
+  gap: 20px;
+  margin-top: 16px;
+}
+
+.breakdown-essay-side {
+  flex: 0 0 45%;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.breakdown-details-side {
+  flex: 0 0 55%;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  overflow-y: auto;
+  max-height: 500px;
+  padding-right: 8px;
+}
+
+/* Adjust essay box for side layout */
+.breakdown-essay-side .breakdown-essay-box {
+  flex: 1;
+  max-height: 350px;
+}
+
+.breakdown-essay-box {
+  background: linear-gradient(135deg, #f9f4f3 0%, #faf7f6 100%);
+  border: 1px solid #e8dcd8;
+  border-radius: 8px;
+  padding: 12px;
+  margin-top: 10px;
+  max-height: 350px;
+  overflow-y: auto;
+}
+
+.breakdown-essay-text {
+  color: #333;
+  font-size: 12px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  letter-spacing: 0.2px;
+  margin: 0;
+}
+
+/* Scrollbar styling for essay box */
+.breakdown-essay-box::-webkit-scrollbar {
+  width: 6px;
+}
+
+.breakdown-essay-box::-webkit-scrollbar-track {
+  background: #f0e8e5;
+  border-radius: 10px;
+}
+
+.breakdown-essay-box::-webkit-scrollbar-thumb {
+  background: #d4a89a;
+  border-radius: 10px;
+}
+
+.breakdown-essay-box::-webkit-scrollbar-thumb:hover {
+  background: #c89a85;
+}
+
+/* Scrollbar styling for details side */
+.breakdown-details-side::-webkit-scrollbar {
+  width: 6px;
+}
+
+.breakdown-details-side::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.breakdown-details-side::-webkit-scrollbar-thumb {
+  background: #d4a89a;
+  border-radius: 10px;
+}
+
+.breakdown-details-side::-webkit-scrollbar-thumb:hover {
+  background: #c89a85;
+}
+
 /* Confirm modal */
 .confirm-title {
   font-size: 1.15rem;
@@ -701,6 +798,22 @@
   .history-toolbar { flex-direction: column; align-items: stretch; }
   .filter-count { margin-left: 0; padding-bottom: 0; }
   .essay-type-badge { display: none; }
-  .breakdown-modal, .confirm-modal, .notes-modal { margin: 16px; padding: 20px; }
+  .breakdown-modal, .confirm-modal, .notes-modal { margin: 16px; padding: 20px; max-width: 95vw; }
   .th-check, .td-check { display: none; }
+  
+  /* Stack essay and details vertically on mobile */
+  .breakdown-content-container {
+    flex-direction: column;
+    gap: 16px;
+  }
+  
+  .breakdown-essay-side,
+  .breakdown-details-side {
+    flex: 1 1 auto;
+    max-height: none;
+  }
+  
+  .breakdown-essay-side .breakdown-essay-box {
+    max-height: 300px;
+  }
 }

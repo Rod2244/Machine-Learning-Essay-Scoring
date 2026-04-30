@@ -283,7 +283,7 @@ const HistoryPage = () => {
                 </th>
                 <th>Essay Title</th>
                 <th className="th-sortable" onClick={() => handleSort('student')}>
-                  Student {sortIcon('student')}
+                  Student/Users {sortIcon('student')}
                 </th>
                 <th>Type</th>
                 <th className="th-sortable" onClick={() => handleSort('date')}>
@@ -394,30 +394,48 @@ const HistoryPage = () => {
                 {getScoreLabel(viewEssay.totalScore)}
               </span>
             </div>
-            <p className="breakdown-section-title">Score Breakdown</p>
-            <div className="breakdown-criteria">
-              {viewEssay.criteria.map((c, i) => {
-                const pct = Math.round((c.score / c.max) * 100);
-                return (
-                  <div key={i} className="breakdown-criterion">
-                    <div className="breakdown-criterion-top">
-                      <span className="breakdown-criterion-name">{c.name}</span>
-                      <span className="breakdown-criterion-score">{c.score}/{c.max}</span>
-                    </div>
-                    <div className="breakdown-bar-track">
-                      <div className={`breakdown-bar-fill ${getScoreColor(pct)}`} style={{ width: `${pct}%` }} />
-                    </div>
+            
+            {/* Landscape Layout Container */}
+            <div className="breakdown-content-container">
+              {/* Left Side - Essay Content */}
+              {viewEssay.text && (
+                <div className="breakdown-essay-side">
+                  <p className="breakdown-section-title">Essay Content</p>
+                  <div className="breakdown-essay-box">
+                    <p className="breakdown-essay-text">{viewEssay.text}</p>
                   </div>
-                );
-              })}
-            </div>
-            {/* Show notes if may laman */}
-            {viewEssay.notes && (
-              <div className="breakdown-notes">
-                <p className="breakdown-section-title">Teacher Notes</p>
-                <p className="breakdown-notes-text">{viewEssay.notes}</p>
+                </div>
+              )}
+              
+              {/* Right Side - Score Breakdown & Notes */}
+              <div className="breakdown-details-side">
+                <p className="breakdown-section-title">Score Breakdown</p>
+                <div className="breakdown-criteria">
+                  {viewEssay.criteria.map((c, i) => {
+                    const pct = Math.round((c.score / c.max) * 100);
+                    return (
+                      <div key={i} className="breakdown-criterion">
+                        <div className="breakdown-criterion-top">
+                          <span className="breakdown-criterion-name">{c.name}</span>
+                          <span className="breakdown-criterion-score">{c.score}/{c.max}</span>
+                        </div>
+                        <div className="breakdown-bar-track">
+                          <div className={`breakdown-bar-fill ${getScoreColor(pct)}`} style={{ width: `${pct}%` }} />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+                
+                {/* Show notes if may laman */}
+                {viewEssay.notes && (
+                  <div className="breakdown-notes">
+                    <p className="breakdown-section-title">Teacher Notes</p>
+                    <p className="breakdown-notes-text">{viewEssay.notes}</p>
+                  </div>
+                )}
               </div>
-            )}
+            </div>
           </div>
         </div>
       )}

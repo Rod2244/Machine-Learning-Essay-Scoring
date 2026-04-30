@@ -399,6 +399,31 @@
   .re-cancel-btn, .re-save-btn { width: 100%; text-align: center; }
 }
 
+/* Read-Only Styles */
+.re-title-input:disabled {
+  color: var(--secondary-brown);
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.re-field-input:disabled,
+.re-level-label-input:disabled,
+.re-level-score-input:disabled,
+.re-level-descriptor:disabled {
+  background-color: #f9f4f3;
+  color: var(--secondary-brown);
+  opacity: 0.7;
+  cursor: not-allowed;
+  border-color: rgba(126, 100, 81, 0.1);
+}
+
+.re-field-input:disabled::placeholder,
+.re-level-label-input:disabled::placeholder,
+.re-level-score-input:disabled::placeholder,
+.re-level-descriptor:disabled::placeholder {
+  color: rgba(126, 100, 81, 0.4);
+}
+
 @media (max-width: 500px) {
   .re-levels-grid { grid-template-columns: 1fr; }
   .re-level-pills { display: none; }

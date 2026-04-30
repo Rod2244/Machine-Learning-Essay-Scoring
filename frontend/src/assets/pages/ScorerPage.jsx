@@ -4,6 +4,7 @@ import ConfirmationModal from "../Components/confirmationModal";
 
 const ScorerPage = () => {
   const [essayPrompt, setEssayPrompt] = useState("");
+  const [studentName, setStudentName] = useState("");
   const [studentResponse, setStudentResponse] = useState("");
   const [dragActive, setDragActive] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -71,6 +72,7 @@ const ScorerPage = () => {
 
   const clearAll = () => {
     setEssayPrompt("");
+    setStudentName("");
     setStudentResponse("");
     setScoringResult(null);
     setError(null);
@@ -169,11 +171,18 @@ const ScorerPage = () => {
         response: studentResponse,
         rubric_id: selectedRubricId,
         user_id: user_id, // ✓ Include user_id
-        student_name: user_full_name || "Student",
+        student_name: studentName || user_full_name || "Student",
         essay_type: selectedRubric?.title || "Essay",
       };
 
       console.log("📤 Sending request to backend:", requestBody);
+      console.log("📤 Selected Rubric Details:", {
+        id: selectedRubric?.id,
+        title: selectedRubric?.title,
+        isCustom: selectedRubric?.isCustom,
+        criteriaCount: selectedRubric?.criteria?.length,
+        rubric_id_being_sent: selectedRubricId,
+      });
 
       const response = await fetch(`${apiUrl}/api/score`, {
         method: "POST",
@@ -247,6 +256,31 @@ const ScorerPage = () => {
                   )}
                 </div>
                 <button className="save-btn">Save</button>
+              </div>
+            </div>
+
+            {/* Student Name Section */}
+            <div className="input-section">
+              <div className="section-label">Student Name <span style={{fontSize: '0.85em', color: '#999'}}>(Optional)</span></div>
+              <div className="input-row">
+                <div className="input-wrapper">
+                  <input
+                    type="text"
+                    className="essay-prompt-input"
+                    placeholder="Leave blank to use your account name"
+                    value={studentName}
+                    onChange={(e) => setStudentName(e.target.value)}
+                  />
+                  {studentName && (
+                    <button
+                      className="clear-input-btn"
+                      onClick={() => setStudentName("")}
+                      title="Clear student name"
+                    >
+                      ✕
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -504,6 +538,8 @@ const ScorerPage = () => {
         onClose={() => setIsModalOpen(false)}
         onSave={handleSaveRubrics}
         selectedRubricId={selectedRubricId}
+        selectedRubricTitle={selectedRubric?.title}
+        isReadOnly={!selectedRubric?.isCustom}
         apiUrl={apiUrl}
       />
     </div>

@@ -22,23 +22,38 @@ class SupabaseService:
     def __init__(self):
         # Load environment variables
         self.supabase_url = os.getenv('SUPABASE_URL')
-        self.supabase_key = os.getenv('SUPABASE_ANON_KEY')
+        self.supabase_anon_key = os.getenv('SUPABASE_ANON_KEY')
+        self.supabase_service_role_key = os.getenv('SUPABASE_SERVICE_ROLE_KEY')
         self.client = None
+        self.admin_client = None
         
         if not SUPABASE_AVAILABLE:
             print("⚠️ Supabase module not installed (optional dependency)")
             return
         
-        if not self.supabase_url or not self.supabase_key:
+        if not self.supabase_url or not self.supabase_anon_key:
             print("⚠️ Supabase credentials not found in environment variables")
             self.client = None
         else:
             try:
-                self.client: Client = create_client(self.supabase_url, self.supabase_key)
-                print("✅ Supabase client initialized successfully")
+                # Regular client with anon key (for reads and user-specific operations)
+                self.client: Client = create_client(self.supabase_url, self.supabase_anon_key)
+                print("✅ Supabase client (anon) initialized successfully")
             except Exception as e:
                 print(f"❌ Failed to initialize Supabase client: {e}")
                 self.client = None
+        
+        # Initialize admin client if service role key is available
+        if self.supabase_url and self.supabase_service_role_key:
+            try:
+                # Admin client with service role key (bypasses RLS policies)
+                self.admin_client: Client = create_client(self.supabase_url, self.supabase_service_role_key)
+                print("✅ Supabase admin client (service role) initialized successfully")
+            except Exception as e:
+                print(f"⚠️ Failed to initialize Supabase admin client: {e}")
+                self.admin_client = None
+        else:
+            print("⚠️ SUPABASE_SERVICE_ROLE_KEY not found - admin operations may not work")
     
     def is_connected(self) -> bool:
         """Check if Supabase is connected"""
@@ -88,7 +103,7 @@ class SupabaseService:
                 'essay_title': essay_data.get('essay_title', 'Untitled Essay'),
                 'essay_type': essay_data.get('essay_type', 'Essay'),
                 'essay_prompt': essay_data.get('essay_prompt', ''),
-                'essay_text': essay_data.get('essay_text', '')[:1000],  # Limit text length
+                'essay_text': essay_data.get('essay_text', '')[:5000],  # Limit text length
                 'total_score': essay_data.get('total_score', 0),
                 'max_score': essay_data.get('max_score', 100),
                 'breakdown': essay_data.get('breakdown', {}),
@@ -325,7 +340,9 @@ class SupabaseService:
                         'maxScore': essay['max_score'],
                         'status': essay['status'],
                         'notes': essay['teacher_notes'],
-                        'criteria': self._convert_breakdown_to_criteria(essay.get('breakdown', {}))
+                        'criteria': self._convert_breakdown_to_criteria(essay.get('breakdown', {})),
+                        'text': essay.get('essay_text', 'Essay text not available'),  # Add essay text
+                        'prompt': essay.get('essay_prompt', '')  # Add prompt if available
                     })
                 return essays
             else:

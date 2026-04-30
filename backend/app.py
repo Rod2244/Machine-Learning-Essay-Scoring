@@ -203,8 +203,28 @@ def get_all_rubrics():
 
 @app.route('/api/login', methods=['POST'])
 def login():
-    # Extract only serializable data from Supabase session
+    """Login endpoint"""
     try:
+        data = request.get_json()
+        email = data.get('email')
+        password = data.get('password')
+        
+        if not email or not password:
+            return jsonify({
+                "success": False,
+                "error": "Email and password required"
+            }), 400
+        
+        # Call auth service to login
+        session, error = auth_service.login(email, password)
+        
+        if error:
+            return jsonify({
+                "success": False,
+                "error": error
+            }), 401
+        
+        # Extract user and token data
         user_id = session.user.id
         full_name = None
         
@@ -238,9 +258,10 @@ def login():
         }), 200
     except Exception as e:
         print(f"Error serializing session: {e}")
+        print(traceback.format_exc())
         return jsonify({
             "success": False,
-            "error": "Login successful but failed to process session data"
+            "error": "Login failed - please try again"
         }), 500
 
 @app.route('/health', methods=['GET'])
@@ -289,6 +310,35 @@ def create_rubric():
         return jsonify({"success": True, "rubric": result.data[0]}), 201
     except Exception as e:
         print(f"Error creating rubric: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
+
+# --- GET single rubric by ID ---
+@app.route('/api/rubrics/<rubric_id>', methods=['GET'])
+def get_rubric(rubric_id):
+    """Get a single rubric by ID from Supabase"""
+    if not SUPABASE_AVAILABLE:
+        return jsonify({"success": False, "error": "Supabase not available"}), 503
+    
+    try:
+        print(f"[GET /api/rubrics/{rubric_id}] Fetching rubric...")
+        
+        # Use admin client to bypass RLS policies
+        client_to_use = supabase_service.admin_client if supabase_service.admin_client else supabase_service.client
+        
+        result = client_to_use.table("rubrics").select("*").eq("id", rubric_id).execute()
+        
+        if result.data and len(result.data) > 0:
+            rubric = result.data[0]
+            rubric['isCustom'] = rubric.get('is_custom', True)
+            print(f"[GET /api/rubrics/{rubric_id}] Found rubric: {rubric['title']}")
+            return jsonify({"success": True, "rubric": rubric}), 200
+        else:
+            print(f"[GET /api/rubrics/{rubric_id}] Rubric not found")
+            return jsonify({"success": False, "error": "Rubric not found"}), 404
+    except Exception as e:
+        print(f"[GET /api/rubrics/{rubric_id}] Error: {e}")
+        import traceback
+        traceback.print_exc()
         return jsonify({"success": False, "error": str(e)}), 500
 
 
@@ -753,23 +803,53 @@ def update_rubric(rubric_id):
         return jsonify({"success": False, "error": "Missing rubric data"}), 400
     try:
         update_fields = {}
-        for field in ["title", "description", "icon", "criteria"]:
+        # Include all fields that might be needed for update
+        for field in ["title", "description", "icon", "criteria", "is_custom", "isCustom", "created_by"]:
             if field in data:
-                update_fields[field] = data[field]
+                # Convert camelCase to snake_case for database
+                if field == "isCustom":
+                    update_fields["is_custom"] = data[field]
+                else:
+                    update_fields[field] = data[field]
+        
         if not update_fields:
             return jsonify({"success": False, "error": "No valid fields to update"}), 400
-        print(f"[PATCH /api/rubrics/{{rubric_id}}] rubric_id: {rubric_id}")
-        print(f"[PATCH /api/rubrics/{{rubric_id}}] update_fields: {update_fields}")
-        result = supabase_service.client.table("rubrics").update(update_fields).eq("id", rubric_id).execute()
-        print(f"[PATCH /api/rubrics/{{rubric_id}}] Supabase result: {result}")
+        
+        print(f"[PATCH /api/rubrics/{rubric_id}] rubric_id: {rubric_id}")
+        print(f"[PATCH /api/rubrics/{rubric_id}] update_fields: {update_fields}")
+        
+        # Use admin_client if available (bypasses RLS policies), otherwise use regular client
+        client_to_use = supabase_service.admin_client if supabase_service.admin_client else supabase_service.client
+        client_type = "admin" if supabase_service.admin_client else "regular"
+        print(f"[PATCH /api/rubrics/{rubric_id}] Using {client_type} client")
+        
+        # Execute the update
+        result = client_to_use.table("rubrics").update(update_fields).eq("id", rubric_id).execute()
+        print(f"[PATCH /api/rubrics/{rubric_id}] Supabase result: {result}")
+        print(f"[PATCH /api/rubrics/{rubric_id}] Result data: {getattr(result, 'data', None)}")
+        
         if hasattr(result, 'data') and result.data:
-            print(f"[PATCH /api/rubrics/{{rubric_id}}] Updated rubric: {result.data[0]}")
-            return jsonify({"success": True, "rubric": result.data[0]}), 200
+            print(f"[PATCH /api/rubrics/{rubric_id}] Update successful")
+            # Fetch the updated rubric to return it
+            fetch_result = client_to_use.table("rubrics").select("*").eq("id", rubric_id).execute()
+            if fetch_result.data and len(fetch_result.data) > 0:
+                updated_rubric = fetch_result.data[0]
+                print(f"[PATCH /api/rubrics/{rubric_id}] Updated rubric: {updated_rubric}")
+                return jsonify({"success": True, "rubric": updated_rubric}), 200
+            else:
+                return jsonify({"success": True, "rubric": update_fields}), 200
         else:
-            print(f"[PATCH /api/rubrics/{{rubric_id}}] No rubric updated. Supabase returned: {getattr(result, 'data', None)}")
-            return jsonify({"success": False, "error": "Rubric not found or not updated"}), 404
+            print(f"[PATCH /api/rubrics/{rubric_id}] No rubric updated. Supabase returned: {getattr(result, 'data', None)}")
+            # Try to debug why the rubric wasn't found
+            print(f"[PATCH /api/rubrics/{rubric_id}] Checking if rubric exists...")
+            check_result = client_to_use.table("rubrics").select("id, title, created_by").eq("id", rubric_id).execute()
+            print(f"[PATCH /api/rubrics/{rubric_id}] Rubric exists check: {check_result.data}")
+            
+            return jsonify({"success": False, "error": "Rubric not found or RLS policy prevented update."}), 404
     except Exception as e:
         print(f"Error updating rubric: {e}")
+        import traceback
+        traceback.print_exc()
         return jsonify({"success": False, "error": str(e)}), 500
 
 

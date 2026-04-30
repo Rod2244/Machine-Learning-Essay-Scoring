@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import '../css/RubricsEditsec.css';
 
 // Default criteria — ginagamit pag walang existing criteria ang rubric
@@ -46,30 +46,49 @@ const DEFAULT_CRITERIA = [
 ];
 
 // Tinatanggap na yung `rubric` prop para ma-pre-fill ang title ng selected essay type
-const RubricsEditsec = ({ rubric, onSave, onCancel }) => {
-  const [criteria, setCriteria] = useState(DEFAULT_CRITERIA);
-  const [expandedId, setExpandedId] = useState(null);
+const RubricsEditsec = ({ rubric, onSave, onCancel, isReadOnly = false }) => {
+  // Initialize criteria from rubric prop if it has criteria, otherwise use DEFAULT_CRITERIA
+  const [criteria, setCriteria] = useState(rubric?.criteria || DEFAULT_CRITERIA);
+  const [expandedIndex, setExpandedIndex] = useState(null); // Use index instead of ID
 
   // Gamitin ang title ng piniling rubric, hindi hardcoded
   const [rubricTitle, setRubricTitle] = useState(rubric?.title || 'Essay Scoring Rubric');
+
+  // Update criteria and title whenever the rubric prop changes (when refetched from database)
+  useEffect(() => {
+    console.log("📝 RubricsEditsec - Rubric prop updated:", rubric);
+    if (rubric?.criteria) {
+      console.log("📝 Updating criteria from rubric:", rubric.criteria);
+      setCriteria(rubric.criteria);
+      setExpandedIndex(null); // Reset expanded state when criteria are updated
+    }
+    if (rubric?.title) {
+      setRubricTitle(rubric.title);
+    }
+  }, [rubric?.id]); // Depend on rubric ID so it updates when a different rubric is selected
 
   const maxTotal = criteria.reduce(
     (sum, c) => sum + Math.max(...c.levels.map(l => l.score)), 0
   );
 
-  const updateCriterion = (id, field, value) =>
+  const updateCriterion = (id, field, value) => {
+    if (isReadOnly) return; // Prevent updates if read-only
     setCriteria(prev => prev.map(c => c.id === id ? { ...c, [field]: value } : c));
+  };
 
-  const updateLevel = (cId, li, field, value) =>
+  const updateLevel = (cId, li, field, value) => {
+    if (isReadOnly) return; // Prevent updates if read-only
     setCriteria(prev => prev.map(c =>
       c.id === cId
         ? { ...c, levels: c.levels.map((l, i) => i === li ? { ...l, [field]: value } : l) }
         : c
     ));
+  };
 
   const addCriterion = () => {
+    if (isReadOnly) return; // Prevent adding if read-only
     const id = Date.now();
-    setCriteria(prev => [...prev, {
+    const newCriteria = [...criteria, {
       id, name: '', description: '',
       levels: [
         { label: 'Excellent',  score: 10, descriptor: '' },
@@ -77,17 +96,20 @@ const RubricsEditsec = ({ rubric, onSave, onCancel }) => {
         { label: 'Developing', score: 4,  descriptor: '' },
         { label: 'Beginning',  score: 1,  descriptor: '' },
       ],
-    }]);
-    // Auto-expand yung bagong criterion
-    setExpandedId(id);
+    }];
+    setCriteria(newCriteria);
+    // Auto-expand the new criterion by its index
+    setExpandedIndex(newCriteria.length - 1);
   };
 
   const deleteCriterion = (id) => {
+    if (isReadOnly) return; // Prevent deleting if read-only
     setCriteria(prev => prev.filter(c => c.id !== id));
-    if (expandedId === id) setExpandedId(null);
+    if (expandedIndex !== null) setExpandedIndex(null); // Reset expanded state
   };
 
   const move = (i, dir) => {
+    if (isReadOnly) return; // Prevent moving if read-only
     const next = [...criteria];
     const t = i + dir;
     if (t < 0 || t >= next.length) return;
@@ -103,10 +125,16 @@ const RubricsEditsec = ({ rubric, onSave, onCancel }) => {
           <input
             className="re-title-input"
             value={rubricTitle}
-            onChange={e => setRubricTitle(e.target.value)}
+            onChange={e => !isReadOnly && setRubricTitle(e.target.value)}
             placeholder="Rubric Title"
+            disabled={isReadOnly}
           />
-          <p className="re-subtitle">Click a criterion to expand and edit its scoring levels.</p>
+          <p className="re-subtitle">
+            {isReadOnly 
+              ? "🔒 Read-Only Rubric — You can view and use this rubric for scoring, but cannot edit it."
+              : "Click a criterion to expand and edit its scoring levels."
+            }
+          </p>
         </div>
         {/* Total points badge — auto-calculate habang nag-eEdit */}
         <div className="re-score-badge">
@@ -117,14 +145,14 @@ const RubricsEditsec = ({ rubric, onSave, onCancel }) => {
 
       <div className="re-criteria-list">
         {criteria.map((c, i) => (
-          <div key={c.id} className={`re-card ${expandedId === c.id ? 'expanded' : ''}`}>
+          <div key={c.id} className={`re-card ${expandedIndex === i ? 'expanded' : ''}`}>
             {/* I-click para palawakin o i-collapse ang criterion */}
-            <div className="re-card-top" onClick={() => setExpandedId(expandedId === c.id ? null : c.id)}>
+            <div className="re-card-top" onClick={() => setExpandedIndex(expandedIndex === i ? null : i)}>
               <div className="re-card-left">
                 <span className="re-card-index">{String(i + 1).padStart(2, '0')}</span>
                 <div className="re-card-info">
                   <span className="re-card-name">{c.name || <em>Untitled Criterion</em>}</span>
-                  {expandedId !== c.id && (
+                  {expandedIndex !== i && (
                     <span className="re-card-desc-preview">{c.description || 'No description'}</span>
                   )}
                 </div>
@@ -136,11 +164,11 @@ const RubricsEditsec = ({ rubric, onSave, onCancel }) => {
                     <span key={li} className={`re-level-pill re-level-pill--${li}`}>{l.score}</span>
                   ))}
                 </div>
-                <span className="re-chevron">{expandedId === c.id ? '▲' : '▼'}</span>
+                <span className="re-chevron">{expandedIndex === i ? '▲' : '▼'}</span>
               </div>
             </div>
 
-            {expandedId === c.id && (
+            {expandedIndex === i && (
               <div className="re-card-body">
                 <div className="re-top-fields">
                   <div className="re-field-row">
@@ -150,6 +178,7 @@ const RubricsEditsec = ({ rubric, onSave, onCancel }) => {
                       value={c.name}
                       onChange={e => updateCriterion(c.id, 'name', e.target.value)}
                       placeholder="e.g. Content & Ideas"
+                      disabled={isReadOnly}
                     />
                   </div>
                   <div className="re-field-row">
@@ -159,6 +188,7 @@ const RubricsEditsec = ({ rubric, onSave, onCancel }) => {
                       value={c.description}
                       onChange={e => updateCriterion(c.id, 'description', e.target.value)}
                       placeholder="What does this criterion evaluate?"
+                      disabled={isReadOnly}
                     />
                   </div>
                 </div>
@@ -174,6 +204,7 @@ const RubricsEditsec = ({ rubric, onSave, onCancel }) => {
                             className="re-level-label-input"
                             value={l.label}
                             onChange={e => updateLevel(c.id, li, 'label', e.target.value)}
+                            disabled={isReadOnly}
                           />
                           <input
                             className="re-level-score-input"
@@ -181,6 +212,7 @@ const RubricsEditsec = ({ rubric, onSave, onCancel }) => {
                             min={0}
                             value={l.score}
                             onChange={e => updateLevel(c.id, li, 'score', Number(e.target.value))}
+                            disabled={isReadOnly}
                           />
                           <span className="re-level-pts">pts</span>
                         </div>
@@ -190,6 +222,7 @@ const RubricsEditsec = ({ rubric, onSave, onCancel }) => {
                           value={l.descriptor}
                           onChange={e => updateLevel(c.id, li, 'descriptor', e.target.value)}
                           placeholder="Describe performance at this level..."
+                          disabled={isReadOnly}
                         />
                       </div>
                     ))}
@@ -197,27 +230,34 @@ const RubricsEditsec = ({ rubric, onSave, onCancel }) => {
                 </div>
 
                 {/* Move up/down at delete — para ma-reorder or matanggal ang criterion */}
-                <div className="re-card-actions">
-                  <button className="re-move-btn" onClick={() => move(i, -1)} disabled={i === 0}>↑</button>
-                  <button className="re-move-btn" onClick={() => move(i, 1)} disabled={i === criteria.length - 1}>↓</button>
-                  <button className="re-delete-btn" onClick={() => deleteCriterion(c.id)}>🗑 Delete</button>
-                </div>
+                {!isReadOnly && (
+                  <div className="re-card-actions">
+                    <button className="re-move-btn" onClick={() => move(i, -1)} disabled={i === 0}>↑</button>
+                    <button className="re-move-btn" onClick={() => move(i, 1)} disabled={i === criteria.length - 1}>↓</button>
+                    <button className="re-delete-btn" onClick={() => deleteCriterion(c.id)}>🗑 Delete</button>
+                  </div>
+                )}
               </div>
             )}
           </div>
         ))}
       </div>
 
-      <button className="re-add-btn" onClick={addCriterion}>
-        <span className="re-add-icon">+</span> Add Criterion
-      </button>
+      {!isReadOnly && (
+        <button className="re-add-btn" onClick={addCriterion}>
+          <span className="re-add-icon">+</span> Add Criterion
+        </button>
+      )}
 
       <div className="re-footer">
-        <button className="re-cancel-btn" onClick={onCancel}>Cancel</button>
-        {/* I-pass lahat ng data pataas — title + criteria */}
-        <button className="re-save-btn" onClick={() => onSave?.({ title: rubricTitle, criteria })}>
-          Save Rubric
+        <button className="re-cancel-btn" onClick={onCancel}>
+          {isReadOnly ? "Close" : "Cancel"}
         </button>
+        {!isReadOnly && (
+          <button className="re-save-btn" onClick={() => onSave?.({ title: rubricTitle, criteria })}>
+            Save Rubric
+          </button>
+        )}
       </div>
     </div>
   );

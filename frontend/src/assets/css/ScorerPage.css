@@ -174,17 +174,23 @@
 }
 
 .edit-icon {
-  background: none;
-  border: none;
+  background-color: var(--primary-cocoa);
+  border: 2px solid var(--primary-cocoa);
   font-size: 18px;
   cursor: pointer;
-  padding: 8px;
-  border-radius: 6px;
+  padding: 10px 12px;
+  border-radius: 8px;
   transition: all 0.3s ease;
+  color: white;
+  box-shadow: 0 2px 4px rgba(80, 59, 47, 0.3);
 }
 
 .edit-icon:hover {
-  background-color: var(--accent-blush);
+  background-color: var(--secondary-brown);
+  border-color: var(--secondary-brown);
+  color: white;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(80, 59, 47, 0.4);
 }
 
 .rubric-cards {
@@ -397,6 +403,9 @@
   font-size: 1rem;
   text-align: center;
   opacity: 0.7;
+  border-bottom: 1px solid rgba(217, 142, 139, 0.2);
+  padding-bottom: 20px;
+  margin-bottom: 20px;
 }
 
 /* Progress Bar */
@@ -489,51 +498,79 @@
   cursor: not-allowed;
 }
 
-/* Rubric Preview Styles */
+/* Rubric Preview Styles - Redesigned Structure */
 .rubric-preview {
   margin-top: 16px;
-  padding: 16px;
-  background-color: rgba(217, 142, 139, 0.05);
-  border-left: 4px solid var(--accent-rose);
-  border-radius: 6px;
+  padding: 20px;
+  background: linear-gradient(135deg, rgba(217, 142, 139, 0.03) 0%, rgba(126, 100, 81, 0.03) 100%);
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(80, 59, 47, 0.05);
 }
 
 .rubric-preview h4 {
-  font-size: 1rem;
-  font-weight: 600;
-  color: var(--primary-cocoa);
-  margin-bottom: 12px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #000000;
+  margin-bottom: 16px;
   font-family: var(--font-title);
+  text-align: center;
+  padding-bottom: 12px;
+  border-bottom: 2px solid rgba(217, 142, 139, 0.2);
+  letter-spacing: 0.5px;
 }
 
 .rubric-preview ul {
   list-style: none;
   padding: 0;
   margin: 0;
+  display: grid;
+  gap: 12px;
 }
 
 .rubric-preview li {
-  font-size: 0.9rem;
-  color: var(--secondary-brown);
-  padding: 6px 0;
-  border-bottom: 1px solid rgba(80, 59, 47, 0.1);
+  font-size: 0.95rem;
+  color: #1A0E0A;
+  font-weight: 600;
+  padding: 16px 18px;
+  background-color: #f8f8f8;
+  border: 2px solid rgba(217, 142, 139, 0.4);
+  border-radius: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: all 0.3s ease;
+  box-shadow: 0 3px 8px rgba(80, 59, 47, 0.12);
 }
 
-.rubric-preview li:last-child {
-  border-bottom: none;
+.rubric-preview li:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(80, 59, 47, 0.08);
+  border-color: rgba(217, 142, 139, 0.2);
+  background-color: rgba(217, 142, 139, 0.02);
 }
 
 .rubric-preview li strong {
-  color: var(--accent-rose);
+  color: #C62828;
+  font-weight: 700;
+  font-size: 0.9rem;
+  background-color: rgba(198, 40, 40, 0.1);
+  padding: 4px 10px;
+  border-radius: 12px;
+  border: 1px solid rgba(198, 40, 40, 0.3);
 }
 
 .total-points {
-  font-size: 0.95rem;
-  color: var(--primary-cocoa);
-  font-weight: 600;
-  padding-top: 8px;
-  margin-top: 8px;
-  border-top: 2px solid rgba(80, 59, 47, 0.15);
+  font-size: 1rem;
+  color: #000000 !important;
+  font-weight: 800;
+  padding: 16px;
+  margin-top: 16px;
+  background: linear-gradient(135deg, var(--accent-blush) 0%, rgba(217, 142, 139, 0.1) 100%);
+  border-radius: 8px;
+  text-align: center;
+  border: 1px solid rgba(217, 142, 139, 0.2);
+  letter-spacing: 0.3px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
 /* Disabled State for Buttons */

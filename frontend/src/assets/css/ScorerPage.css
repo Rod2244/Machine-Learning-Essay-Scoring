@@ -158,7 +158,7 @@
 }
 
 .generate-btn:hover {
-  background-color: var(--accent-rose);
+  background-color: var(--secondary-brown);
   transform: translateY(-1px);
   box-shadow: 0 2px 8px rgba(80, 59, 47, 0.2);
 }
@@ -322,6 +322,51 @@
 .clear-input-btn:hover {
   background-color: var(--accent-blush);
   color: var(--primary-cocoa);
+}
+
+/* OCR Upload Button Styles */
+.ocr-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.ocr-btn {
+  padding: 10px 16px;
+  background-color: var(--primary-cocoa);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-family: var(--font-body);
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ocr-btn:hover {
+  background-color: var(--secondary-brown);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(80, 59, 47, 0.2);
+}
+
+.ocr-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 4px rgba(80, 59, 47, 0.15);
+}
+
+.ocr-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.ocr-btn:disabled:hover {
+  background-color: var(--primary-cocoa);
+  box-shadow: none;
 }
 
 /* ML Integration Styles */

@@ -298,11 +298,28 @@ def create_rubric():
         return jsonify({"success": False, "error": "Missing required fields"}), 400
 
     try:
+        # Transform criteria to include level definitions for scoring
+        criteria_with_levels = []
+        for criterion in data.get("criteria", []):
+            points = criterion.get("points", 25)
+            # Create level definitions based on total points
+            levels = [
+                {"label": "Beginning", "score": max(1, int(points * 0.2))},
+                {"label": "Developing", "score": max(1, int(points * 0.5))},
+                {"label": "Proficient", "score": max(1, int(points * 0.75))},
+                {"label": "Excellent", "score": points}
+            ]
+            criteria_with_levels.append({
+                "name": criterion.get("name", ""),
+                "points": points,
+                "levels": levels
+            })
+        
         rubric_data = {
             "title": data["title"],
             "description": data.get("description", ""),
             "icon": data.get("icon", ""),
-            "criteria": data["criteria"],
+            "criteria": criteria_with_levels,
             "is_custom": True,
             "created_by": data.get("created_by")
         }
@@ -809,6 +826,24 @@ def update_rubric(rubric_id):
                 # Convert camelCase to snake_case for database
                 if field == "isCustom":
                     update_fields["is_custom"] = data[field]
+                elif field == "criteria":
+                    # Transform criteria to include level definitions for scoring
+                    criteria_with_levels = []
+                    for criterion in data.get("criteria", []):
+                        points = criterion.get("points", 25)
+                        # Create level definitions based on total points
+                        levels = [
+                            {"label": "Beginning", "score": max(1, int(points * 0.2))},
+                            {"label": "Developing", "score": max(1, int(points * 0.5))},
+                            {"label": "Proficient", "score": max(1, int(points * 0.75))},
+                            {"label": "Excellent", "score": points}
+                        ]
+                        criteria_with_levels.append({
+                            "name": criterion.get("name", ""),
+                            "points": points,
+                            "levels": levels
+                        })
+                    update_fields["criteria"] = criteria_with_levels
                 else:
                     update_fields[field] = data[field]
         

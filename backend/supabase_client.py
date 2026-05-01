@@ -59,6 +59,37 @@ class SupabaseService:
         """Check if Supabase is connected"""
         return self.client is not None
     
+    def _get_numeric_rubric_id(self, rubric_id):
+        """
+        Convert rubric_id to numeric if it's a string/UUID.
+        Returns the numeric ID if valid, otherwise None.
+        
+        Args:
+            rubric_id: Can be int, string UUID, or any value
+            
+        Returns:
+            int: Numeric ID (1-4 for predefined rubrics) or None
+        """
+        if rubric_id is None:
+            return None
+        
+        # If it's already a valid integer
+        if isinstance(rubric_id, int):
+            return rubric_id if rubric_id > 0 else None
+        
+        # If it's a string, try to convert to int
+        if isinstance(rubric_id, str):
+            try:
+                numeric_id = int(rubric_id)
+                return numeric_id if numeric_id > 0 else None
+            except ValueError:
+                # It's a UUID or non-numeric string - return None
+                # (database will reject custom rubric UUIDs gracefully)
+                print(f"⚠️ Custom rubric UUID detected: {rubric_id} - storing as NULL in rubric_id column")
+                return None
+        
+        return None
+    
     def save_essay_score(self, essay_data: Dict) -> Dict:
         """
         Save essay score to Supabase
@@ -109,10 +140,10 @@ class SupabaseService:
                 'breakdown': essay_data.get('breakdown', {}),
                 'confidence': essay_data.get('confidence', 0.0),
                 'feedback': essay_data.get('feedback', ''),
-                'rubric_id': essay_data.get('rubric_id', 1),
+                'rubric_id': self._get_numeric_rubric_id(essay_data.get('rubric_id')),  # Handle both numeric and UUID
                 'topic_relevance': essay_data.get('topic_relevance', 0.0),
                 'status': essay_data.get('status', 'Graded'),
-                'teacher_notes': essay_data.get('teacher_notes', '')
+                'teacher_notes': essay_data.get('teacher_notes', '')  # Keep teacher_notes clean - only for actual teacher notes
             }
             
             # Verify user_id exists
@@ -123,35 +154,12 @@ class SupabaseService:
             print(f"💾 Saving essay for user: {record['user_id']}")
             
             # Insert into Supabase - let database handle created_at/updated_at timestamps
-            try:
-                result = self.client.table('essay_scores').insert(record).execute()
-                if result.data and len(result.data) > 0:
-                    print(f"✓ Essay saved successfully with ID: {result.data[0].get('id')}")
-                    return {'success': True, 'data': result.data[0]}
-                else:
-                    return {'success': False, 'error': 'Failed to save to Supabase'}
-            except Exception as e:
-                # Handle common type mismatch when rubric_id is a UUID but DB expects bigint
-                err_str = str(e)
-                print(f"❌ Error saving essay score: {err_str}")
-                if 'invalid input syntax for type bigint' in err_str and record.get('rubric_id') and not str(record.get('rubric_id')).isdigit():
-                    print("⚠️ Detected bigint type error for rubric_id; retrying without numeric rubric_id and storing UUID in teacher_notes")
-                    retry_record = record.copy()
-                    # move the UUID into teacher_notes so it's still recorded
-                    existing_notes = retry_record.get('teacher_notes') or ''
-                    retry_record['teacher_notes'] = (existing_notes + f" rubric_uuid:{retry_record.get('rubric_id')}").strip()
-                    retry_record['rubric_id'] = None
-                    try:
-                        retry_result = self.client.table('essay_scores').insert(retry_record).execute()
-                        if retry_result.data and len(retry_result.data) > 0:
-                            print(f"✓ Essay saved successfully on retry with ID: {retry_result.data[0].get('id')}")
-                            return {'success': True, 'data': retry_result.data[0]}
-                        else:
-                            return {'success': False, 'error': 'Failed to save to Supabase on retry'}
-                    except Exception as e2:
-                        print(f"❌ Retry failed: {e2}")
-                        return {'success': False, 'error': str(e2)}
-                return {'success': False, 'error': str(e)}
+            result = self.client.table('essay_scores').insert(record).execute()
+            if result.data and len(result.data) > 0:
+                print(f"✓ Essay saved successfully with ID: {result.data[0].get('id')}")
+                return {'success': True, 'data': result.data[0]}
+            else:
+                return {'success': False, 'error': 'Failed to save to Supabase'}
                 
         except Exception as e:
             print(f"❌ Error saving essay score: {e}")
@@ -299,7 +307,7 @@ class SupabaseService:
                         'maxScore': essay['max_score'],
                         'status': essay['status'],
                         'notes': essay['teacher_notes'],
-                        'criteria': self._convert_breakdown_to_criteria(essay.get('breakdown', {}))
+                        'criteria': self._convert_breakdown_to_criteria(essay.get('breakdown', {}), essay.get('rubric_id'))
                     })
                 return essays
             else:
@@ -340,7 +348,7 @@ class SupabaseService:
                         'maxScore': essay['max_score'],
                         'status': essay['status'],
                         'notes': essay['teacher_notes'],
-                        'criteria': self._convert_breakdown_to_criteria(essay.get('breakdown', {})),
+                        'criteria': self._convert_breakdown_to_criteria(essay.get('breakdown', {}), essay.get('rubric_id')),
                         'text': essay.get('essay_text', 'Essay text not available'),  # Add essay text
                         'prompt': essay.get('essay_prompt', '')  # Add prompt if available
                     })
@@ -392,17 +400,45 @@ class SupabaseService:
             print(f"❌ Error deleting essay: {e}")
             return False
     
-    def _convert_breakdown_to_criteria(self, breakdown: Dict) -> List:
+    def _convert_breakdown_to_criteria(self, breakdown: Dict, rubric_id=None) -> List:
         """
-        Convert breakdown JSON to criteria format for frontend
+        Convert breakdown JSON to criteria format for frontend with correct max scores.
+        
+        Args:
+            breakdown: Dict of criterion_name -> score
+            rubric_id: ID of the rubric to fetch max scores from (optional)
+        
+        Returns:
+            List of criteria with name, score, and max fields
         """
         criteria = []
+        
+        # Try to get rubric to find actual max scores
+        rubric_criteria = {}
+        if rubric_id:
+            try:
+                # Try to fetch from Supabase
+                query = self.admin_client.table('rubrics').select('criteria').eq('id', str(rubric_id)).execute() if self.admin_client else None
+                if query and hasattr(query, 'data') and query.data and len(query.data) > 0:
+                    rubric_data = query.data[0].get('criteria', [])
+                    # Build a map of criterion name -> max points
+                    for criterion in rubric_data:
+                        criterion_name = criterion.get('name', '')
+                        max_points = criterion.get('points', 25)
+                        rubric_criteria[criterion_name] = max_points
+            except Exception as e:
+                print(f"⚠️ Could not fetch rubric {rubric_id} for max scores: {e}")
+        
+        # Convert breakdown to criteria array
         for criterion_name, score in breakdown.items():
+            # Get max from rubric if available, otherwise default to 25
+            max_score = rubric_criteria.get(criterion_name, 25)
             criteria.append({
                 'name': criterion_name,
                 'score': score,
-                'max': 25  # Default max score, adjust as needed
+                'max': max_score
             })
+        
         return criteria
     
     def sign_up(self, email: str, password: str):

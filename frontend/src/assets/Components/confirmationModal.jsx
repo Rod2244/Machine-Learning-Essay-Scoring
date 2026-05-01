@@ -190,14 +190,6 @@ const ConfirmationModal = ({
                   disabled={saving || isReadOnly}
                 />
               </div>
-              <button
-                className="rubric-remove-btn"
-                onClick={() => handleRemoveRubric(rubric.id)}
-                title="Remove criteria"
-                disabled={saving || isReadOnly}
-              >
-                🗑️
-              </button>
             </div>
           ))}
         </div>

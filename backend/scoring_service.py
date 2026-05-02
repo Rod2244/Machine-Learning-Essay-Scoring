@@ -1,6 +1,7 @@
 import os
 import sys
 from config import config
+from topic_relevance_service import get_topic_relevance_service
 
 # Add the scripts directory to the path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -9,6 +10,7 @@ class EssayScoringService:
     def __init__(self):
         self.model_path = os.path.join(config.MODELS_DIR, 'essay_scorer.pkl')
         self.scorer = None
+        self.topic_relevance_service = get_topic_relevance_service()
         self.load_model()
     
     def load_model(self):
@@ -357,51 +359,15 @@ class EssayScoringService:
 
     def calculate_topic_relevance(self, essay_text, essay_prompt):
         """
-        Calculate how relevant the essay is to the given prompt/topic
-        Returns a score from 0-100
+        Calculate how relevant the essay is to the given prompt/topic using semantic embeddings.
+        Returns a score from 0-100.
+        
+        Uses semantic similarity analysis which understands meaning beyond keywords.
         """
-        if not essay_prompt or essay_prompt.strip() == "":
-            return 80  # Default score if no prompt provided
-        
-        # Extract key topic words from prompt
-        prompt_words = set(essay_prompt.lower().split())
-        essay_words = set(essay_text.lower().split())
-        
-        # Remove common words
-        common_words = {'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by', 'is', 'are', 'was', 'were', 'be', 'been', 'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would', 'could', 'should', 'may', 'might', 'can', 'this', 'that', 'these', 'those', 'i', 'you', 'he', 'she', 'it', 'we', 'they', 'me', 'him', 'her', 'us', 'them', 'my', 'your', 'his', 'her', 'its', 'our', 'their'}
-        
-        prompt_words = prompt_words - common_words
-        essay_words = essay_words - common_words
-        
-        # Calculate word overlap
-        matching_words = prompt_words.intersection(essay_words)
-        
-        # Base relevance from word overlap
-        if len(prompt_words) == 0:
-            word_relevance = 50
-        else:
-            word_relevance = (len(matching_words) / len(prompt_words)) * 60
-        
-        # Bonus for longer essays (assume more content = more likely on-topic)
-        length_bonus = min(20, len(essay_text.split()) / 50)
-        
-        # Bonus for related concepts (simple keyword matching)
-        related_bonus = 0
-        topic_keywords = {
-            'climate': ['environment', 'weather', 'temperature', 'warming', 'carbon', 'emissions', 'greenhouse'],
-            'technology': ['digital', 'computer', 'internet', 'software', 'apps', 'devices', 'innovation'],
-            'education': ['school', 'learning', 'students', 'teachers', 'knowledge', 'study', 'academic'],
-            'health': ['medical', 'doctor', 'hospital', 'medicine', 'disease', 'treatment', 'patient'],
-            'economy': ['money', 'business', 'market', 'financial', 'economic', 'trade', 'investment']
-        }
-        
-        for topic, keywords in topic_keywords.items():
-            if topic in essay_prompt.lower():
-                found_keywords = sum(1 for keyword in keywords if keyword in essay_text.lower())
-                related_bonus += min(20, found_keywords * 4)
-        
-        total_relevance = word_relevance + length_bonus + related_bonus
-        return min(100, max(0, total_relevance))
+        return self.topic_relevance_service.calculate_semantic_relevance(
+            essay_text, 
+            essay_prompt
+        )
     
     def _calculate_quality_penalties(self, essay_text):
         """

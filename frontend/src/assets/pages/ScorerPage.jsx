@@ -68,6 +68,35 @@ const ScorerPage = () => {
         r.id === selectedRubricId || String(r.id) === String(selectedRubricId),
     ) || rubrics[0];
 
+  // Function to get progress status and color
+  const getProgressStatus = (percentage) => {
+    if (percentage >= 76) {
+      return {
+        status: "Excellent",
+        color: "#27ae60",
+        backgroundColor: "rgba(39, 174, 96, 0.1)",
+      };
+    } else if (percentage >= 51) {
+      return {
+        status: "Proficient",
+        color: "#2980b9",
+        backgroundColor: "rgba(41, 128, 185, 0.1)",
+      };
+    } else if (percentage >= 26) {
+      return {
+        status: "Developing",
+        color: "#f39c12",
+        backgroundColor: "rgba(243, 156, 18, 0.1)",
+      };
+    } else {
+      return {
+        status: "Beginning",
+        color: "#e74c3c",
+        backgroundColor: "rgba(231, 76, 60, 0.1)",
+      };
+    }
+  };
+
   const clearEssayPrompt = () => setEssayPrompt("");
 
   const clearAll = () => {
@@ -480,6 +509,10 @@ const ScorerPage = () => {
                         scoringResult.breakdown,
                       );
                     }
+
+                    const percentage = (score / criterion.points) * 100;
+                    const progressStatus = getProgressStatus(percentage);
+
                     return (
                       <div className="rubric-card" key={idx}>
                         <h4>{criterion.name}</h4>
@@ -487,14 +520,27 @@ const ScorerPage = () => {
                           <span className="score-value">{score}</span>
                           <span className="score-max">/{criterion.points}</span>
                         </div>
-                        <div className="progress-bar">
+                        <div className="progress-bar" style={{ backgroundColor: progressStatus.backgroundColor }}>
                           <div
                             className="progress-fill"
                             style={{
-                              width: `${(score / criterion.points) * 100}%`,
+                              width: `${percentage}%`,
+                              backgroundColor: progressStatus.color,
+                              transition: "all 0.5s ease-in-out",
                             }}
                           />
                         </div>
+                        <p
+                          className="progress-status"
+                          style={{
+                            color: progressStatus.color,
+                            marginTop: "6px",
+                            fontSize: "0.85em",
+                            fontWeight: "600",
+                          }}
+                        >
+                          {progressStatus.status}
+                        </p>
                       </div>
                     );
                   })}

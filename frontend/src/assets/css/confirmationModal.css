@@ -311,3 +311,125 @@
   opacity: 0.5;
   cursor: not-allowed;
 }
+
+/* ========================================
+   DARK MODE SUPPORT
+   ======================================== */
+
+:root.dark-mode .modal-overlay {
+  background: rgba(0, 0, 0, 0.6);
+}
+
+:root.dark-mode .modal-container {
+  background: #1f1f1f;
+  border-color: #404040;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  color: #f0f0f0;
+}
+
+:root.dark-mode .modal-title {
+  color: #ffffff;
+}
+
+:root.dark-mode .modal-close-btn {
+  color: #d0d0d0;
+}
+
+:root.dark-mode .modal-close-btn:hover {
+  background: rgba(217, 142, 139, 0.2);
+  color: #ffffff;
+}
+
+:root.dark-mode .modal-subtitle {
+  color: #d0d0d0;
+}
+
+:root.dark-mode .modal-column-labels {
+  border-bottom-color: #404040;
+}
+
+:root.dark-mode .col-label-name,
+:root.dark-mode .col-label-score {
+  color: #c0c0c0;
+}
+
+:root.dark-mode .rubric-index {
+  color: #d0d0d0;
+}
+
+:root.dark-mode .rubric-name-input {
+  background: #2a2a2a;
+  border-color: #404040;
+  color: #f0f0f0;
+}
+
+:root.dark-mode .rubric-name-input:focus {
+  border-color: #d98e8b;
+  box-shadow: 0 0 0 3px rgba(217, 142, 139, 0.2);
+}
+
+:root.dark-mode .rubric-name-input::placeholder {
+  color: #888;
+}
+
+:root.dark-mode .score-slash {
+  color: #d0d0d0;
+}
+
+:root.dark-mode .rubric-score-input {
+  background: #2a2a2a;
+  border-color: #404040;
+  color: #f0f0f0;
+}
+
+:root.dark-mode .rubric-score-input:focus {
+  border-color: #d98e8b;
+  box-shadow: 0 0 0 3px rgba(217, 142, 139, 0.2);
+}
+
+:root.dark-mode .rubric-score-input--actual {
+  background: #333;
+  border-color: #505050;
+  color: #ffffff;
+  font-weight: 600;
+}
+
+:root.dark-mode .modal-add-btn {
+  background: transparent;
+  border-color: #404040;
+  color: #d0d0d0;
+}
+
+:root.dark-mode .modal-add-btn:hover {
+  background: rgba(217, 142, 139, 0.1);
+  border-color: #d98e8b;
+  color: #f0f0f0;
+}
+
+:root.dark-mode .modal-cancel-btn {
+  background: transparent;
+  border-color: #404040;
+  color: #d0d0d0;
+}
+
+:root.dark-mode .modal-cancel-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #f0f0f0;
+}
+
+:root.dark-mode .modal-save-btn {
+  background: #d98e8b;
+  color: black;
+}
+
+:root.dark-mode .modal-save-btn:hover {
+  background: #ff7070;
+  color: black;
+}
+
+:root.dark-mode .rubric-name-input:disabled,
+:root.dark-mode .rubric-score-input:disabled {
+  background-color: #333;
+  color: #888;
+  border-color: #404040;
+}

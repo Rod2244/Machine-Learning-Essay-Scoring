@@ -20,6 +20,19 @@
   --shadow-medium: 0 8px 32px rgba(80, 59, 47, 0.14);
 }
 
+/* Dark Mode Variables */
+:root.dark-mode {
+  --primary-cocoa: #e0d5ca;
+  --dusty-rose: #d98e8b;
+  --cream-base: #1a1a1a;
+  --secondary-brown: #b0a090;
+  --accent-blush: #3a2a28;
+  --frame-grey: #505050;
+  
+  --shadow-soft: 0 4px 20px rgba(0, 0, 0, 0.4);
+  --shadow-medium: 0 8px 32px rgba(0, 0, 0, 0.5);
+}
+
 /* Global Styles */
 * {
   margin: 0;
@@ -35,6 +48,7 @@ body {
   overflow-y: auto;
   height: auto;
   min-height: 100vh;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 h1, h2, h3, .logo-text {

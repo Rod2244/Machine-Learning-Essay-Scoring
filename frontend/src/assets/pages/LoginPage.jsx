@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import '../css/LoginPage.css';
+import { createClient } from '@supabase/supabase-js';
 
 const LoginPage = ({ onLogin }) => {
   const navigate = useNavigate();
@@ -19,7 +20,32 @@ const LoginPage = ({ onLogin }) => {
   const [apiError, setApiError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
 
+  // Forgot password states
+  const [showForgotModal, setShowForgotModal] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState('');
+  const [forgotLoading, setForgotLoading] = useState(false);
+  const [forgotError, setForgotError] = useState('');
+  const [showResetModal, setShowResetModal] = useState(false);
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmNewPassword, setConfirmNewPassword] = useState('');
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmNewPassword, setShowConfirmNewPassword] = useState(false);
+  const [resetLoading, setResetLoading] = useState(false);
+  const [resetError, setResetError] = useState('');
+  const [notification, setNotification] = useState(null); // { type, title, message }
+
+  // Initialize Supabase
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+  const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+  const supabase = supabaseUrl && supabaseKey ? createClient(supabaseUrl, supabaseKey) : null;
+
   const API_BASE_URL = 'http://localhost:5000'; // Change if backend is on different port
+
+  // Force light mode on login page
+  useEffect(() => {
+    // Remove dark-mode class if it exists
+    document.documentElement.classList.remove('dark-mode');
+  }, []);
 
   // Sync mode with URL
   useEffect(() => {
@@ -166,6 +192,119 @@ const LoginPage = ({ onLogin }) => {
     setFormData({ name: '', email: '', password: '', confirmPassword: '' });
     setErrors({});
     setApiError('');
+  };
+
+  // Forgot password: Step 1 - Send reset email
+  const handleForgotPassword = async (e) => {
+    e.preventDefault();
+    if (!forgotEmail.trim()) {
+      setForgotError('Please enter your email address');
+      return;
+    }
+
+    if (!supabase) {
+      setForgotError('Supabase is not configured. Check environment variables.');
+      return;
+    }
+
+    setForgotLoading(true);
+    setForgotError('');
+
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(forgotEmail, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+
+      if (error) {
+        setForgotError('Error: ' + error.message);
+        setNotification({
+          type: 'error',
+          title: '❌ Reset Failed',
+          message: error.message,
+        });
+      } else {
+        setNotification({
+          type: 'success',
+          title: '📧 Email Sent',
+          message: `Password reset link sent to ${forgotEmail}. Check your email!`,
+        });
+        setTimeout(() => setNotification(null), 4000);
+        setForgotEmail('');
+        setShowForgotModal(false);
+      }
+    } catch (err) {
+      setForgotError(err.message || 'Failed to send reset email');
+      setNotification({
+        type: 'error',
+        title: '❌ Error',
+        message: err.message || 'Failed to send reset email',
+      });
+    } finally {
+      setForgotLoading(false);
+    }
+  };
+
+  // Reset password: Step 2 - Update password
+  const handleResetPassword = async (e) => {
+    e.preventDefault();
+
+    if (!newPassword) {
+      setResetError('Please enter a new password');
+      return;
+    }
+    if (newPassword.length < 6) {
+      setResetError('Password must be at least 6 characters');
+      return;
+    }
+    if (newPassword !== confirmNewPassword) {
+      setResetError('Passwords do not match');
+      return;
+    }
+
+    if (!supabase) {
+      setResetError('Supabase is not configured.');
+      return;
+    }
+
+    setResetLoading(true);
+    setResetError('');
+
+    try {
+      const { error } = await supabase.auth.updateUser({
+        password: newPassword,
+      });
+
+      if (error) {
+        setResetError('Error: ' + error.message);
+        setNotification({
+          type: 'error',
+          title: '❌ Update Failed',
+          message: error.message,
+        });
+      } else {
+        setNotification({
+          type: 'success',
+          title: '✅ Password Updated',
+          message: 'Your password has been successfully updated! Redirecting to login...',
+        });
+        setTimeout(() => {
+          setNotification(null);
+          setShowResetModal(false);
+          setNewPassword('');
+          setConfirmNewPassword('');
+          navigate('/login');
+        }, 2000);
+      }
+    } catch (err) {
+      setResetError(err.message || 'Failed to update password');
+      setNotification({
+        type: 'error',
+        title: '❌ Error',
+        message: err.message || 'Failed to update password',
+      });
+    } finally {
+      setResetLoading(false);
+    }
   };
 
   return (
@@ -353,7 +492,13 @@ const LoginPage = ({ onLogin }) => {
           {/* Forgot password hint */}
           {mode === 'login' && (
             <div className="forgot-row">
-              <button type="button" className="forgot-btn">Forgot password?</button>
+              <button 
+                type="button" 
+                className="forgot-btn"
+                onClick={() => setShowForgotModal(true)}
+              >
+                Forgot password?
+              </button>
             </div>
           )}
 
@@ -371,6 +516,165 @@ const LoginPage = ({ onLogin }) => {
           </button>
         </p>
       </div>
+
+      {/* Forgot Password Modal - Step 1: Enter Email */}
+      {showForgotModal && (
+        <div className="modal-overlay" onClick={() => setShowForgotModal(false)}>
+          <div className="forgot-modal" onClick={e => e.stopPropagation()}>
+            <h3 className="forgot-modal-title">🔐 Reset Password</h3>
+            <p className="forgot-modal-subtitle">Enter your email address and we'll send you a password reset link.</p>
+
+            <form onSubmit={handleForgotPassword} className="forgot-form">
+              <div className="form-field">
+                <label className="form-label" htmlFor="forgotEmail">Email Address</label>
+                <input
+                  id="forgotEmail"
+                  type="email"
+                  className={`form-input ${forgotError ? 'error' : ''}`}
+                  placeholder="you@example.com"
+                  value={forgotEmail}
+                  onChange={(e) => {
+                    setForgotEmail(e.target.value);
+                    setForgotError('');
+                  }}
+                  required
+                />
+                {forgotError && <span className="error-msg">{forgotError}</span>}
+              </div>
+
+              <div className="forgot-footer">
+                <button
+                  type="button"
+                  className="modal-cancel-btn"
+                  onClick={() => {
+                    setShowForgotModal(false);
+                    setForgotEmail('');
+                    setForgotError('');
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="modal-confirm-btn"
+                  disabled={forgotLoading}
+                >
+                  {forgotLoading ? '⏳ Sending...' : 'Send Reset Link'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Reset Password Modal - Step 2: Set New Password */}
+      {showResetModal && (
+        <div className="modal-overlay" onClick={() => setShowResetModal(false)}>
+          <div className="forgot-modal" onClick={e => e.stopPropagation()}>
+            <h3 className="forgot-modal-title">🔑 Set New Password</h3>
+            <p className="forgot-modal-subtitle">Enter your new password below.</p>
+
+            <form onSubmit={handleResetPassword} className="forgot-form">
+              {/* New Password */}
+              <div className="form-field">
+                <label className="form-label" htmlFor="newPassword">New Password</label>
+                <div className="password-wrapper">
+                  <input
+                    id="newPassword"
+                    type={showNewPassword ? 'text' : 'password'}
+                    className={`form-input ${resetError ? 'error' : ''}`}
+                    placeholder="••••••••"
+                    value={newPassword}
+                    onChange={(e) => {
+                      setNewPassword(e.target.value);
+                      setResetError('');
+                    }}
+                    required
+                  />
+                  <button
+                    type="button"
+                    className="show-password-btn"
+                    onClick={() => setShowNewPassword(p => !p)}
+                  >
+                    {showNewPassword ? '👁' : '👁‍🗨'}
+                  </button>
+                </div>
+              </div>
+
+              {/* Confirm Password */}
+              <div className="form-field">
+                <label className="form-label" htmlFor="confirmNewPassword">Confirm Password</label>
+                <div className="password-wrapper">
+                  <input
+                    id="confirmNewPassword"
+                    type={showConfirmNewPassword ? 'text' : 'password'}
+                    className={`form-input ${resetError ? 'error' : ''}`}
+                    placeholder="••••••••"
+                    value={confirmNewPassword}
+                    onChange={(e) => {
+                      setConfirmNewPassword(e.target.value);
+                      setResetError('');
+                    }}
+                    required
+                  />
+                  <button
+                    type="button"
+                    className="show-password-btn"
+                    onClick={() => setShowConfirmNewPassword(p => !p)}
+                  >
+                    {showConfirmNewPassword ? '👁' : '👁‍🗨'}
+                  </button>
+                </div>
+              </div>
+
+              {resetError && <span className="error-msg">{resetError}</span>}
+
+              <div className="forgot-footer">
+                <button
+                  type="button"
+                  className="modal-cancel-btn"
+                  onClick={() => {
+                    setShowResetModal(false);
+                    setNewPassword('');
+                    setConfirmNewPassword('');
+                    setResetError('');
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="modal-confirm-btn"
+                  disabled={resetLoading}
+                >
+                  {resetLoading ? '⏳ Updating...' : 'Update Password'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Success/Error Notification */}
+      {notification && notification.type === 'success' && (
+        <div className="success-notification">
+          <span className="success-icon">{notification.title.split(' ')[0]}</span>
+          <div className="success-content">
+            <p className="success-title">{notification.title}</p>
+            <p className="success-message">{notification.message}</p>
+          </div>
+        </div>
+      )}
+
+      {notification && notification.type === 'error' && (
+        <div className="error-notification">
+          <span className="error-icon">{notification.title.split(' ')[0]}</span>
+          <div className="error-content">
+            <p className="error-title">{notification.title}</p>
+            <p className="error-message">{notification.message}</p>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

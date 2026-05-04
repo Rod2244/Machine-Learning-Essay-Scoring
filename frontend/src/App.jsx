@@ -5,6 +5,7 @@ import ScorerPage from './assets/pages/ScorerPage';
 import RubricsSection from './assets/pages/RubricsSection';
 import HistoryPage from './assets/pages/HistoryPage';
 import LoginPage from './assets/pages/LoginPage';
+import ResetPasswordPage from './assets/pages/ResetPasswordPage';
 import Home from './assets/Landing-Page/LP-pages/home';
 import AboutUs from './assets/Landing-Page/LP-pages/about-us';
 import ContactUs from './assets/Landing-Page/LP-pages/contact-us';
@@ -162,6 +163,7 @@ const App = () => {
     <Routes>
       <Route path="/login" element={<LoginPage onLogin={handleLogin} />} />
       <Route path="/signup" element={<LoginPage onLogin={handleLogin} />} />
+      <Route path="/reset-password" element={<ResetPasswordPage />} />
       {/* Redirect protected routes to login if not authenticated */}
       <Route path="/essays" element={<Navigate to="/login" replace />} />
       <Route path="/rubrics" element={<Navigate to="/login" replace />} />

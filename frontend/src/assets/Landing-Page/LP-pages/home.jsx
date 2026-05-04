@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import "../LP-css/home.css";
 import TopBar from "../LP-components/top-bar";
@@ -11,6 +11,12 @@ import resultsIcon from "../../results.png";
 
 export default function Home({ onNavigate }) {
   const navigate = useNavigate();
+
+  // Force light mode on landing page
+  useEffect(() => {
+    // Remove dark-mode class if it exists
+    document.documentElement.classList.remove('dark-mode');
+  }, []);
 
   const handleTryNow = () => {
     navigate('/login');

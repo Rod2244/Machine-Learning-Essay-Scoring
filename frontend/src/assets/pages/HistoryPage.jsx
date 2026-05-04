@@ -3,7 +3,7 @@ import '../css/HistoryPage.css';
 
 const STATUSES = ['Graded', 'For Review', 'Returned'];
 
-const ESSAY_TYPES = ['All Types', 'Argumentative Essay', 'Expository Essay', 'Narrative Essay', 'Research Paper'];
+const DEFAULT_ESSAY_TYPES = ['All Types', 'Argumentative Essay', 'Expository Essay', 'Narrative Essay', 'Research Paper'];
 
 const getScoreColor = (score) => {
   if (score >= 90) return 'score-excellent';
@@ -24,6 +24,9 @@ const HistoryPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // Essay types — default + custom from backend
+  const [essayTypes, setEssayTypes] = useState(DEFAULT_ESSAY_TYPES);
+
   // Filters
   const [filterType, setFilterType] = useState('All Types');
   const [filterDate, setFilterDate] = useState('');
@@ -41,6 +44,10 @@ const HistoryPage = () => {
   const [regradeEssay, setRegradeEssay] = useState(null);
   const [notesEssay, setNotesEssay] = useState(null);
   const [notesInput, setNotesInput] = useState('');
+
+  // Notification modals
+  const [notification, setNotification] = useState(null); // { type: 'success'|'error', message: '', title: '' }
+  const [showErrorModal, setShowErrorModal] = useState(false);
 
   const apiUrl = "http://localhost:5000";
 
@@ -77,6 +84,35 @@ const HistoryPage = () => {
     };
 
     loadEssayHistory();
+  }, []);
+
+  // Fetch rubrics (both default and custom) from backend
+  useEffect(() => {
+    const fetchRubrics = async () => {
+      try {
+        const response = await fetch(`${apiUrl}/api/rubrics`);
+        const data = await response.json();
+
+        if (Array.isArray(data)) {
+          // Extract rubric titles and combine with defaults
+          const customRubricTitles = data.map(r => r.title);
+          const mergedTypes = [
+            'All Types',
+            ...DEFAULT_ESSAY_TYPES.slice(1), // Skip 'All Types' from defaults
+            ...customRubricTitles.filter(title => !DEFAULT_ESSAY_TYPES.includes(title)) // Only add new custom ones
+          ];
+          
+          setEssayTypes(mergedTypes);
+          console.log('Merged essay types:', mergedTypes);
+        }
+      } catch (err) {
+        console.error('Error fetching rubrics:', err);
+        // Keep default types if fetch fails
+        setEssayTypes(DEFAULT_ESSAY_TYPES);
+      }
+    };
+
+    fetchRubrics();
   }, []);
 
   // Filter + search + sort
@@ -122,9 +158,51 @@ const HistoryPage = () => {
   const toggleOne = (id) => setSelected(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
 
   // Bulk delete
-  const handleBulkDelete = () => {
-    setEssays(prev => prev.filter(e => !selected.includes(e.id)));
-    setSelected([]);
+  const handleBulkDelete = async () => {
+    try {
+      // Delete each selected essay from backend
+      const deletePromises = selected.map(id =>
+        fetch(`${apiUrl}/api/essay-history/${id}`, {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }).then(res => res.json())
+      );
+
+      const results = await Promise.all(deletePromises);
+      
+      // Check if all deletions were successful
+      const allSuccess = results.every(r => r.success);
+      
+      if (allSuccess) {
+        // Remove from local state only after successful backend deletion
+        setEssays(prev => prev.filter(e => !selected.includes(e.id)));
+        setSelected([]);
+        setNotification({
+          type: 'success',
+          title: '✅ Deleted Successfully',
+          message: `${selected.length} essay${selected.length !== 1 ? 's' : ''} deleted permanently.`
+        });
+        // Auto-hide after 3 seconds
+        setTimeout(() => setNotification(null), 3000);
+      } else {
+        setNotification({
+          type: 'error',
+          title: '❌ Deletion Failed',
+          message: 'Failed to delete some essays. Please try again.'
+        });
+        setShowErrorModal(true);
+      }
+    } catch (err) {
+      console.error('Error deleting essays:', err);
+      setNotification({
+        type: 'error',
+        title: '❌ Error',
+        message: 'Failed to delete essays: ' + err.message
+      });
+      setShowErrorModal(true);
+    }
   };
 
   // Status change
@@ -141,11 +219,27 @@ const HistoryPage = () => {
       const data = await response.json();
       if (data.success) {
         setEssays(prev => prev.map(e => e.id === id ? { ...e, status } : e));
+        setNotification({
+          type: 'success',
+          title: '✅ Status Updated',
+          message: `Essay status changed to "${status}".`
+        });
+        setTimeout(() => setNotification(null), 2500);
       } else {
-        alert('Failed to update status');
+        setNotification({
+          type: 'error',
+          title: '❌ Update Failed',
+          message: 'Failed to update status. Please try again.'
+        });
+        setShowErrorModal(true);
       }
     } catch (err) {
-      alert('Failed to update status');
+      setNotification({
+        type: 'error',
+        title: '❌ Error',
+        message: 'Failed to update status: ' + err.message
+      });
+      setShowErrorModal(true);
     }
   };
 
@@ -166,12 +260,28 @@ const HistoryPage = () => {
       const data = await response.json();
       if (data.success) {
         setEssays(prev => prev.map(e => e.id === notesEssay.id ? { ...e, notes: notesInput } : e));
+        setNotification({
+          type: 'success',
+          title: '✅ Notes Saved',
+          message: 'Teacher notes saved successfully.'
+        });
+        setTimeout(() => setNotification(null), 2500);
         setNotesEssay(null);
       } else {
-        alert('Failed to save notes');
+        setNotification({
+          type: 'error',
+          title: '❌ Save Failed',
+          message: 'Failed to save notes. Please try again.'
+        });
+        setShowErrorModal(true);
       }
     } catch (err) {
-      alert('Failed to save notes');
+      setNotification({
+        type: 'error',
+        title: '❌ Error',
+        message: 'Failed to save notes: ' + err.message
+      });
+      setShowErrorModal(true);
     }
   };
 
@@ -215,7 +325,7 @@ const HistoryPage = () => {
         <div className="filter-group">
           <label className="filter-label">Type</label>
           <select className="filter-select" value={filterType} onChange={e => setFilterType(e.target.value)}>
-            {ESSAY_TYPES.map(t => <option key={t}>{t}</option>)}
+            {essayTypes.map(t => <option key={t}>{t}</option>)}
           </select>
         </div>
         <div className="filter-group">
@@ -478,6 +588,38 @@ const HistoryPage = () => {
             <div className="confirm-footer">
               <button className="modal-cancel-btn" onClick={() => setNotesEssay(null)}>Cancel</button>
               <button className="modal-confirm-btn" onClick={handleSaveNotes}>Save Notes</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Success Notification Popup */}
+      {notification && notification.type === 'success' && (
+        <div className="success-notification">
+          <span className="success-icon">{notification.title.split(' ')[0]}</span>
+          <div className="success-content">
+            <p className="success-title">{notification.title}</p>
+            <p className="success-message">{notification.message}</p>
+          </div>
+        </div>
+      )}
+
+      {/* Error Notification Modal */}
+      {showErrorModal && notification && notification.type === 'error' && (
+        <div className="modal-overlay" onClick={() => setShowErrorModal(false)}>
+          <div className="error-modal" onClick={e => e.stopPropagation()}>
+            <h3 className="error-modal-title">{notification.title}</h3>
+            <p className="error-modal-message">{notification.message}</p>
+            <div className="error-modal-footer">
+              <button 
+                className="error-modal-btn" 
+                onClick={() => {
+                  setShowErrorModal(false);
+                  setNotification(null);
+                }}
+              >
+                OK
+              </button>
             </div>
           </div>
         </div>

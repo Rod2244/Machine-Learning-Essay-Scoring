@@ -21,7 +21,7 @@
   box-sizing: border-box;
 }
 
-/* --- Sidebar Bookmark Styles --- */
+/* --- Sidebar Base --- */
 .sidebar {
   display: flex;
   flex-direction: column;
@@ -37,48 +37,80 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  border-radius: 8px 0 0 8px; /* Bookmark shape */
+  border-radius: 8px 0 0 8px;
   cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  color: var(--primary-cocoa);
+  transition: all 0.25s ease;
+  color: #000000;
   box-shadow: -3px 2px 6px rgba(0,0,0,0.1);
   border: 1px solid rgba(80, 59, 47, 0.1);
   position: relative;
-  margin-right: -2px; /* Hugs the inner-layout */
+  margin-right: -2px;
 }
 
-/* Specific Tab Colors */
-.sidebar-item:nth-child(1) { background-color: #FFE5E1; } /* Essays - Peach */
-.sidebar-item:nth-child(2) { background-color: #E8F4E8; } /* Rubrics - Green */
-.sidebar-item:nth-child(3) { background-color: #E5E5FF; } /* History - Blue */
+/* Light mode tab colors */
+.sidebar-item:nth-child(1) { background-color: #FFE5E1; }
+.sidebar-item:nth-child(2) { background-color: #E8F4E8; }
+.sidebar-item:nth-child(3) { background-color: #E5E5FF; }
 
-.sidebar-item .icon {
-  font-size: 18px;
-  margin-bottom: 2px;
+/* Hover (LIGHT MODE) */
+.sidebar-item:hover:not(.active) {
+  transform: translateX(-5px);
+  filter: brightness(0.95);
+  color: #000000;
 }
 
-.sidebar-item .label {
-  font-size: 9px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-/* Active "Coming Forward" Effect */
+/* ACTIVE STATE (ALL MODES SAFE) */
 .sidebar-item.active {
-  width: 90px; /* Expands to the left */
+  width: 90px;
   margin-left: -10px;
   z-index: 15;
-  box-shadow: -6px 4px 12px rgba(80, 59, 47, 0.2);
-  border-right: none; /* Merges into the white container */
+  border-right: none;
+  box-shadow: -6px 4px 12px rgba(0,0,0,0.2);
+  color: #ffffff !important; /* FORCE readability */
+  font-weight: 700;
 }
 
-.sidebar-item.active:nth-child(1) { background-color: #FFB3A7; }
-.sidebar-item.active:nth-child(2) { background-color: #B3E5B3; }
-.sidebar-item.active:nth-child(3) { background-color: #B3B3FF; }
+/* Active colors */
+.sidebar-item.active:nth-child(1) { background-color: #E07968; }
+.sidebar-item.active:nth-child(2) { background-color: #52B352; }
+.sidebar-item.active:nth-child(3) { background-color: #6666CC; }
+
+/* ---------------------------------------
+   DARK MODE (FIXED PROPERLY)
+--------------------------------------- */
+
+:root.dark-mode .sidebar-item {
+  background-color: #2f2f2f !important;
+  color: #e0e0e0;
+  border-color: #444;
+  box-shadow: -3px 2px 6px rgba(0, 0, 0, 0.4);
+}
+
+/* Dark hover */
+:root.dark-mode .sidebar-item:hover:not(.active) {
+  background-color: #3a3a3a;
+  color: #ffffff;
+  transform: translateX(-5px);
+}
+
+/* Dark active (keep strong colors + readable text) */
+:root.dark-mode .sidebar-item.active {
+  color: #ffffff !important;
+  box-shadow: -6px 4px 12px rgba(0, 0, 0, 0.6);
+}
+
+/* Keep your accent colors in dark mode */
+:root.dark-mode .sidebar-item.active:nth-child(1) { background-color: #E07968; }
+:root.dark-mode .sidebar-item.active:nth-child(2) { background-color: #52B352; }
+:root.dark-mode .sidebar-item.active:nth-child(3) { background-color: #6666CC; }
 
 .sidebar-item:hover:not(.active) {
   transform: translateX(-5px);
+  color: #000000;
+}
+
+.sidebar-item:hover {
+  color: #000000;
 }
 
 /* --- Main Content Area --- */
@@ -205,6 +237,130 @@
   padding: 25px;
   border-radius: 15px;
   border: 2px solid rgba(80, 59, 47, 0.05);
+}
+
+/* ========================================
+   DARK MODE SUPPORT
+   ======================================== */
+
+:root.dark-mode .sidebar {
+  background: transparent;
+}
+
+:root.dark-mode .sidebar-item {
+  color: #f0f0f0;
+  box-shadow: -3px 2px 6px rgba(0, 0, 0, 0.3);
+  border-color: rgba(255, 255, 255, 0.2);
+  background-color: #3a3a3a !important;
+}
+
+:root.dark-mode .sidebar-item.active {
+  color: #ffffff;
+  font-weight: 700;
+  box-shadow: -6px 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+:root.dark-mode .sidebar-item.active:nth-child(1) {
+  background-color: #E07968;
+}
+
+:root.dark-mode .sidebar-item.active:nth-child(2) {
+  background-color: #52B352;
+}
+
+:root.dark-mode .sidebar-item.active:nth-child(3) {
+  background-color: #6666CC;
+}
+
+:root.dark-mode .sidebar-item:hover {
+  color: #ffffff;
+}
+
+:root.dark-mode .main-notebook-container {
+  background-color: #1a1a1a;
+}
+
+:root.dark-mode .inner-layout {
+  background: #1f1f1f;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+}
+
+:root.dark-mode .left-panel {
+  background: #1f1f1f;
+  border-right-color: #404040;
+}
+
+:root.dark-mode .left-panel .page-header h2 {
+  color: #ffffff;
+}
+
+:root.dark-mode .left-panel .page-header p {
+  color: #d0d0d0;
+}
+
+:root.dark-mode .essay-prompt-input,
+:root.dark-mode .student-response-textarea {
+  background: #2a2a2a;
+  color: #f0f0f0;
+  border-color: #404040;
+}
+
+:root.dark-mode .essay-prompt-input::placeholder,
+:root.dark-mode .student-response-textarea::placeholder {
+  color: #888;
+}
+
+:root.dark-mode .essay-prompt-input:focus,
+:root.dark-mode .student-response-textarea:focus {
+  border-color: #d98e8b;
+}
+
+:root.dark-mode .clear-x {
+  color: #d0d0d0;
+}
+
+:root.dark-mode .clear-x:hover {
+  color: #ff9090;
+}
+
+:root.dark-mode .save-btn,
+:root.dark-mode .generate-btn {
+  background-color: #d98e8b;
+  color: black;
+}
+
+:root.dark-mode .save-btn:hover,
+:root.dark-mode .generate-btn:hover {
+  background-color: #ff7070;
+  color: black;
+}
+
+:root.dark-mode .clear-btn {
+  background: transparent;
+  border-color: #d0d0d0;
+  color: #d0d0d0;
+}
+
+:root.dark-mode .clear-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: #d98e8b;
+  color: #ff9090;
+}
+
+:root.dark-mode .right-panel {
+  background-color: #1a1a1a;
+}
+
+:root.dark-mode .rubric-card {
+  background: #2a2a2a;
+  color: #f0f0f0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+:root.dark-mode .total-score-box {
+  background-color: rgba(217, 142, 139, 0.15);
+  border-color: #404040;
+  color: #f0f0f0;
 }
 
 /* --- Responsive Adjustments --- */

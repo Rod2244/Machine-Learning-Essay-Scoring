@@ -893,6 +893,54 @@ def not_found(error):
     return jsonify({'error': 'Endpoint not found'}), 404
 
 
+@app.route('/api/rubrics/<rubric_id>', methods=['DELETE', 'OPTIONS'])
+@cross_origin(origins="*", allow_headers=["Content-Type", "Authorization"], methods=["DELETE", "OPTIONS"])
+def delete_rubric(rubric_id):
+    """Delete a custom rubric"""
+    if request.method == 'OPTIONS':
+        # Preflight request
+        return '', 204
+    
+    if not SUPABASE_AVAILABLE:
+        return jsonify({"success": False, "error": "Supabase not available"}), 503
+    
+    try:
+        print(f"[DELETE /api/rubrics/{rubric_id}] Attempting to delete rubric...")
+        
+        # Use admin_client if available (bypasses RLS policies), otherwise use regular client
+        client_to_use = supabase_service.admin_client if supabase_service.admin_client else supabase_service.client
+        client_type = "admin" if supabase_service.admin_client else "regular"
+        print(f"[DELETE /api/rubrics/{rubric_id}] Using {client_type} client")
+        
+        # First check if the rubric exists
+        check_result = client_to_use.table("rubrics").select("id, title, is_custom").eq("id", rubric_id).execute()
+        
+        if not check_result.data or len(check_result.data) == 0:
+            print(f"[DELETE /api/rubrics/{rubric_id}] Rubric not found")
+            return jsonify({"success": False, "error": "Rubric not found"}), 404
+        
+        rubric = check_result.data[0]
+        print(f"[DELETE /api/rubrics/{rubric_id}] Found rubric: {rubric.get('title', 'Unknown')}")
+        
+        # Check if it's a custom rubric (prevent deletion of built-in rubrics)
+        if not rubric.get("is_custom", False):
+            print(f"[DELETE /api/rubrics/{rubric_id}] Cannot delete built-in rubric")
+            return jsonify({"success": False, "error": "Cannot delete built-in rubrics"}), 403
+        
+        # Delete the rubric
+        result = client_to_use.table("rubrics").delete().eq("id", rubric_id).execute()
+        print(f"[DELETE /api/rubrics/{rubric_id}] Supabase delete result: {getattr(result, 'data', None)}")
+        
+        print(f"[DELETE /api/rubrics/{rubric_id}] Rubric deleted successfully")
+        return jsonify({"success": True, "message": f"Rubric '{rubric.get('title', 'Unknown')}' deleted successfully"}), 200
+        
+    except Exception as e:
+        print(f"[DELETE /api/rubrics/{rubric_id}] Error deleting rubric: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
 @app.errorhandler(500)
 def server_error(error):
     return jsonify({'error': 'Internal server error'}), 500

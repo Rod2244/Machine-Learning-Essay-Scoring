@@ -1,9 +1,14 @@
-import React from "react";
+import React, { useEffect } from "react";
 import "../LP-css/home.css";
 import "../LP-css/contact-us.css";
 import TopBar from "../LP-components/top-bar";
 
 export default function ContactUs({ onNavigate }) {
+  // Force light mode on landing page
+  useEffect(() => {
+    // Remove dark-mode class if it exists
+    document.documentElement.classList.remove('dark-mode');
+  }, []);
   return (
     <div className="home">
       <TopBar onNavigate={onNavigate} currentPage="contact" />

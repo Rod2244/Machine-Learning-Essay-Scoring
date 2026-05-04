@@ -243,6 +243,9 @@ const RubricsSection = () => {
   const [newTitle, setNewTitle] = useState("");
   const [newDesc, setNewDesc] = useState("");
   const [newIcon, setNewIcon] = useState("✍️");
+  const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
+  const [rubricToDelete, setRubricToDelete] = useState(null);
+  const [deleteSuccess, setDeleteSuccess] = useState(false);
 
   // Fetch rubrics from backend on mount
   const fetchRubrics = async () => {
@@ -442,10 +445,53 @@ const RubricsSection = () => {
     setSelectedRubric(newRubric);
   };
 
-  const handleDelete = (id, e) => {
+  const handleDelete = (rubric, e) => {
     // Pigilan yung card click pag delete ang pinindot
     e.stopPropagation();
-    setRubrics((prev) => prev.filter((r) => r.id !== id));
+    setRubricToDelete(rubric);
+    setShowDeleteConfirmModal(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!rubricToDelete || !rubricToDelete.id) return;
+
+    try {
+      const response = await fetch(
+        `http://localhost:5000/api/rubrics/${rubricToDelete.id}`,
+        {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+        }
+      );
+
+      const result = await response.json();
+      console.log("Delete response:", result);
+
+      if (result.success) {
+        // Remove from local state
+        setRubrics((prev) => prev.filter((r) => r.id !== rubricToDelete.id));
+        
+        // Show success message
+        setDeleteSuccess(true);
+        setShowDeleteConfirmModal(false);
+        setRubricToDelete(null);
+
+        // Auto-hide success message after 3 seconds
+        setTimeout(() => {
+          setDeleteSuccess(false);
+        }, 3000);
+      } else {
+        alert("Failed to delete rubric: " + (result.error || "Unknown error"));
+      }
+    } catch (err) {
+      alert("Failed to delete rubric: " + err.message);
+      console.error("Delete error:", err);
+    }
+  };
+
+  const handleCancelDelete = () => {
+    setShowDeleteConfirmModal(false);
+    setRubricToDelete(null);
   };
 
   if (selectedRubric) {
@@ -481,8 +527,13 @@ const RubricsSection = () => {
               {/* Delete button — visible lang sa mga custom rubrics */}
               {rubric.isCustom && (
                 <button
+                  type="button"
                   className="rubric-delete-btn"
-                  onClick={(e) => handleDelete(rubric.id, e)}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handleDelete(rubric, e);
+                  }}
                   title="Delete rubric"
                 >
                   ✕
@@ -580,6 +631,42 @@ const RubricsSection = () => {
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Delete confirmation modal */}
+      {showDeleteConfirmModal && rubricToDelete && (
+        <div className="modal-overlay" onClick={handleCancelDelete}>
+          <div className="modal-box" onClick={(e) => e.stopPropagation()}>
+            <h3 className="modal-title">Delete Rubric</h3>
+            <p className="modal-delete-message">
+              Are you sure you want to delete "<strong>{rubricToDelete.title}</strong>"? 
+              This action cannot be undone.
+            </p>
+
+            <div className="modal-footer">
+              <button
+                className="modal-cancel-btn"
+                onClick={handleCancelDelete}
+              >
+                Cancel
+              </button>
+              <button
+                className="modal-delete-confirm-btn"
+                onClick={handleConfirmDelete}
+              >
+                Delete Permanently
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Success notification popup */}
+      {deleteSuccess && (
+        <div className="success-notification">
+          <span className="success-icon">✓</span>
+          <p>Rubric deleted successfully!</p>
         </div>
       )}
     </div>

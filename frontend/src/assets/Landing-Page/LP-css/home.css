@@ -709,6 +709,31 @@ body {
   }
 }
 
+/* Force light mode - override any dark mode that might be applied */
+.home {
+  background: #F5F2ED !important;
+  color: #503B2F !important;
+}
+
+.home .section,
+.home .section p,
+.home .section,
+.home .section p,
+.home .section h2,
+.home .hero,
+.home .features > div {
+  background: inherit;
+  color: inherit;
+}
+
+/* Ensure footer maintains white text */
+.home .footer,
+.home .footer p,
+.home .footer .credit,
+.home .footer .attribution {
+  color: white !important;
+}
+
 /* CTA */
 .cta {
   padding: 15px 20px;

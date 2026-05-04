@@ -386,6 +386,235 @@
   box-shadow: 0 5px 14px rgba(80, 59, 47, 0.25);
 }
 
+/* ========================================
+   DARK MODE SUPPORT
+   ======================================== */
+
+:root.dark-mode .re-container {
+  background: #1a1a1a;
+  color: #f0f0f0;
+}
+
+:root.dark-mode .re-title-input {
+  color: #ffffff;
+}
+
+:root.dark-mode .re-title-input:focus {
+  border-bottom-color: #d98e8b;
+}
+
+:root.dark-mode .re-subtitle {
+  color: #d0d0d0;
+}
+
+:root.dark-mode .re-score-badge {
+  background: linear-gradient(135deg, rgba(217, 142, 139, 0.3), rgba(217, 142, 139, 0.15));
+  border-color: #404040;
+}
+
+:root.dark-mode .re-score-num {
+  color: #ff9090;
+}
+
+:root.dark-mode .re-score-label {
+  color: #c0c0c0;
+}
+
+:root.dark-mode .re-card {
+  background: #2a2a2a;
+  border-color: #404040;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+:root.dark-mode .re-card:hover {
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
+}
+
+:root.dark-mode .re-card.expanded {
+  border-color: #d98e8b;
+  box-shadow: 0 4px 16px rgba(217, 142, 139, 0.2);
+}
+
+:root.dark-mode .re-card-index {
+  color: #ff9090;
+}
+
+:root.dark-mode .re-card-name {
+  color: #ffffff;
+}
+
+:root.dark-mode .re-card-name em {
+  color: #d0d0d0;
+}
+
+:root.dark-mode .re-card-desc-preview {
+  color: #d0d0d0;
+}
+
+:root.dark-mode .re-chevron {
+  color: #888;
+}
+
+:root.dark-mode .re-card-body {
+  border-top-color: #404040;
+}
+
+:root.dark-mode .re-field-label {
+  color: #c0c0c0;
+}
+
+:root.dark-mode .re-field-input {
+  background: #1f1f1f;
+  color: #f0f0f0;
+  border-color: #404040;
+}
+
+:root.dark-mode .re-field-input:focus {
+  border-color: #d98e8b;
+  box-shadow: 0 0 0 3px rgba(217, 142, 139, 0.2);
+}
+
+:root.dark-mode .re-field-input::placeholder {
+  color: #888;
+}
+
+:root.dark-mode .re-levels-heading {
+  color: #c0c0c0;
+}
+
+:root.dark-mode .re-level-card {
+  border-color: #404040;
+}
+
+:root.dark-mode .re-level-card--0 {
+  background: rgba(40, 80, 40, 0.3);
+}
+
+:root.dark-mode .re-level-card--1 {
+  background: rgba(30, 60, 100, 0.3);
+}
+
+:root.dark-mode .re-level-card--2 {
+  background: rgba(100, 70, 0, 0.3);
+}
+
+:root.dark-mode .re-level-card--3 {
+  background: rgba(100, 30, 30, 0.3);
+}
+
+:root.dark-mode .re-level-label-input {
+  color: #ffffff;
+  background: transparent;
+  font-weight: 700;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+}
+
+:root.dark-mode .re-level-score-input {
+  background: #1f1f1f;
+  color: #f0f0f0;
+  border-color: #404040;
+}
+
+:root.dark-mode .re-level-score-input:focus {
+  border-color: #d98e8b;
+}
+
+:root.dark-mode .re-level-pts {
+  color: #d0d0d0;
+}
+
+:root.dark-mode .re-level-descriptor {
+  background: #1f1f1f;
+  color: #f0f0f0;
+  border-color: #404040;
+}
+
+:root.dark-mode .re-level-descriptor:focus {
+  border-color: #d98e8b;
+}
+
+:root.dark-mode .re-level-descriptor::placeholder {
+  color: #888;
+}
+
+:root.dark-mode .re-move-btn {
+  background: rgba(217, 142, 139, 0.2);
+  color: #f0f0f0;
+  border-color: #404040;
+}
+
+:root.dark-mode .re-move-btn:hover:not(:disabled) {
+  background: #d98e8b;
+  color: white;
+}
+
+:root.dark-mode .re-delete-btn {
+  background: transparent;
+  border-color: #d98e8b;
+  color: #ff7070;
+}
+
+:root.dark-mode .re-delete-btn:hover {
+  background: rgba(217, 142, 139, 0.15);
+}
+
+:root.dark-mode .re-add-btn {
+  border-color: #404040;
+  color: #d0d0d0;
+}
+
+:root.dark-mode .re-add-btn:hover {
+  background: rgba(217, 142, 139, 0.1);
+  border-color: #d98e8b;
+  color: #f0f0f0;
+}
+
+:root.dark-mode .re-footer {
+  border-top-color: #404040;
+}
+
+:root.dark-mode .re-cancel-btn {
+  background: transparent;
+  border-color: #d0d0d0;
+  color: #d0d0d0;
+}
+
+:root.dark-mode .re-cancel-btn:hover {
+  background: #d0d0d0;
+  color: #1a1a1a;
+}
+
+:root.dark-mode .re-save-btn {
+  background: #d98e8b;
+  color: black;
+}
+
+:root.dark-mode .re-save-btn:hover {
+  background: #ff7070;
+  color: black;
+}
+
+/* Dark mode for score pills (collapsed view) */
+:root.dark-mode .re-level-pill--0 {
+  background: rgba(46, 125, 50, 0.3);
+  color: #7cce61;
+}
+
+:root.dark-mode .re-level-pill--1 {
+  background: rgba(21, 101, 192, 0.3);
+  color: #64b5f6;
+}
+
+:root.dark-mode .re-level-pill--2 {
+  background: rgba(230, 81, 0, 0.3);
+  color: #ffb74d;
+}
+
+:root.dark-mode .re-level-pill--3 {
+  background: rgba(198, 40, 40, 0.3);
+  color: #ff6b6b;
+}
+
 /* Responsive */
 @media (max-width: 900px) {
   .re-levels-grid { grid-template-columns: repeat(2, 1fr); }

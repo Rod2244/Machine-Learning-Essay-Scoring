@@ -23,8 +23,14 @@ const ScorerPage = () => {
   // File Upload
   const fileInputRef = React.useRef(null);
 
-  // ✅ Debug: Check localStorage when component mounts
+  // ✅ Load saved essay prompt from localStorage on mount
   useEffect(() => {
+    const savedPrompt = localStorage.getItem("savedEssayPrompt");
+    if (savedPrompt) {
+      setEssayPrompt(savedPrompt);
+      console.log("✓ Loaded saved essay prompt from storage");
+    }
+    
     console.log("📖 ScorerPage mounted - checking localStorage:");
     console.log("   user_id:", localStorage.getItem("user_id"));
     console.log("   user_full_name:", localStorage.getItem("user_full_name"));
@@ -99,12 +105,25 @@ const ScorerPage = () => {
 
   const clearEssayPrompt = () => setEssayPrompt("");
 
+  // Save essay prompt to localStorage
+  const handleSavePrompt = () => {
+    if (essayPrompt.trim()) {
+      localStorage.setItem("savedEssayPrompt", essayPrompt);
+      console.log("✓ Essay prompt saved successfully");
+      // Optional: Show brief success feedback
+      alert("Essay prompt saved! ✓");
+    } else {
+      alert("Cannot save an empty essay prompt");
+    }
+  };
+
   const clearAll = () => {
     setEssayPrompt("");
     setStudentName("");
     setStudentResponse("");
     setScoringResult(null);
     setError(null);
+    localStorage.removeItem("savedEssayPrompt"); // Also clear saved prompt
   };
 
   // File Upload Handler
@@ -271,7 +290,7 @@ const ScorerPage = () => {
                     type="text"
                     className="essay-prompt-input"
                     placeholder="Enter the essay question here..."
-                    value={essayPrompt}
+                    value={essayPrompt} onClick={handleSavePrompt}
                     onChange={(e) => setEssayPrompt(e.target.value)}
                   />
                   {essayPrompt && (

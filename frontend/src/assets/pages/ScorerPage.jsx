@@ -110,10 +110,6 @@ const ScorerPage = () => {
     if (essayPrompt.trim()) {
       localStorage.setItem("savedEssayPrompt", essayPrompt);
       console.log("✓ Essay prompt saved successfully");
-      // Optional: Show brief success feedback
-      alert("Essay prompt saved! ✓");
-    } else {
-      alert("Cannot save an empty essay prompt");
     }
   };
 

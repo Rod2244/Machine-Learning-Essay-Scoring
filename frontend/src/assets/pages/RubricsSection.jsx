@@ -17,10 +17,26 @@ const INITIAL_RUBRICS = [
         description: "Clear and compelling thesis statement",
         points: 25,
         levels: [
-          { label: "Excellent", score: 25, descriptor: "Thesis is clear, specific, and compelling" },
-          { label: "Proficient", score: 18, descriptor: "Thesis is clear and mostly specific" },
-          { label: "Developing", score: 12, descriptor: "Thesis is present but vague or general" },
-          { label: "Beginning", score: 6, descriptor: "Thesis is unclear or missing" },
+          {
+            label: "Excellent",
+            score: 25,
+            descriptor: "Thesis is clear, specific, and compelling",
+          },
+          {
+            label: "Proficient",
+            score: 18,
+            descriptor: "Thesis is clear and mostly specific",
+          },
+          {
+            label: "Developing",
+            score: 12,
+            descriptor: "Thesis is present but vague or general",
+          },
+          {
+            label: "Beginning",
+            score: 6,
+            descriptor: "Thesis is unclear or missing",
+          },
         ],
       },
       {
@@ -28,10 +44,26 @@ const INITIAL_RUBRICS = [
         description: "Quality and relevance of supporting evidence",
         points: 25,
         levels: [
-          { label: "Excellent", score: 25, descriptor: "Evidence is relevant, credible, and well-integrated" },
-          { label: "Proficient", score: 18, descriptor: "Evidence is mostly relevant and credible" },
-          { label: "Developing", score: 12, descriptor: "Some evidence provided but may lack credibility" },
-          { label: "Beginning", score: 6, descriptor: "Little to no credible evidence provided" },
+          {
+            label: "Excellent",
+            score: 25,
+            descriptor: "Evidence is relevant, credible, and well-integrated",
+          },
+          {
+            label: "Proficient",
+            score: 18,
+            descriptor: "Evidence is mostly relevant and credible",
+          },
+          {
+            label: "Developing",
+            score: 12,
+            descriptor: "Some evidence provided but may lack credibility",
+          },
+          {
+            label: "Beginning",
+            score: 6,
+            descriptor: "Little to no credible evidence provided",
+          },
         ],
       },
       {
@@ -39,10 +71,26 @@ const INITIAL_RUBRICS = [
         description: "Organization and logical flow of argument",
         points: 30,
         levels: [
-          { label: "Excellent", score: 30, descriptor: "Structure is logical with clear progression" },
-          { label: "Proficient", score: 22, descriptor: "Generally logical structure with minor issues" },
-          { label: "Developing", score: 15, descriptor: "Some organizational issues that affect clarity" },
-          { label: "Beginning", score: 7, descriptor: "Weak or confusing organizational structure" },
+          {
+            label: "Excellent",
+            score: 30,
+            descriptor: "Structure is logical with clear progression",
+          },
+          {
+            label: "Proficient",
+            score: 22,
+            descriptor: "Generally logical structure with minor issues",
+          },
+          {
+            label: "Developing",
+            score: 15,
+            descriptor: "Some organizational issues that affect clarity",
+          },
+          {
+            label: "Beginning",
+            score: 7,
+            descriptor: "Weak or confusing organizational structure",
+          },
         ],
       },
       {
@@ -50,10 +98,26 @@ const INITIAL_RUBRICS = [
         description: "Spelling, punctuation, and grammatical accuracy",
         points: 20,
         levels: [
-          { label: "Excellent", score: 20, descriptor: "Virtually no grammatical or mechanical errors" },
-          { label: "Proficient", score: 15, descriptor: "Minor errors that do not impede understanding" },
-          { label: "Developing", score: 10, descriptor: "Several errors that occasionally distract" },
-          { label: "Beginning", score: 5, descriptor: "Frequent errors that impede comprehension" },
+          {
+            label: "Excellent",
+            score: 20,
+            descriptor: "Virtually no grammatical or mechanical errors",
+          },
+          {
+            label: "Proficient",
+            score: 15,
+            descriptor: "Minor errors that do not impede understanding",
+          },
+          {
+            label: "Developing",
+            score: 10,
+            descriptor: "Several errors that occasionally distract",
+          },
+          {
+            label: "Beginning",
+            score: 5,
+            descriptor: "Frequent errors that impede comprehension",
+          },
         ],
       },
     ],
@@ -71,10 +135,26 @@ const INITIAL_RUBRICS = [
         description: "Clarity and accessibility of explanation",
         points: 30,
         levels: [
-          { label: "Excellent", score: 30, descriptor: "Explanation is crystal clear and accessible" },
-          { label: "Proficient", score: 22, descriptor: "Generally clear with minor unclear passages" },
-          { label: "Developing", score: 15, descriptor: "Some clarity issues that affect understanding" },
-          { label: "Beginning", score: 7, descriptor: "Explanation is often unclear or confusing" },
+          {
+            label: "Excellent",
+            score: 30,
+            descriptor: "Explanation is crystal clear and accessible",
+          },
+          {
+            label: "Proficient",
+            score: 22,
+            descriptor: "Generally clear with minor unclear passages",
+          },
+          {
+            label: "Developing",
+            score: 15,
+            descriptor: "Some clarity issues that affect understanding",
+          },
+          {
+            label: "Beginning",
+            score: 7,
+            descriptor: "Explanation is often unclear or confusing",
+          },
         ],
       },
       {
@@ -82,10 +162,26 @@ const INITIAL_RUBRICS = [
         description: "Logical arrangement of ideas and transitions",
         points: 25,
         levels: [
-          { label: "Excellent", score: 25, descriptor: "Ideas are well-organized with seamless transitions" },
-          { label: "Proficient", score: 18, descriptor: "Generally organized with adequate transitions" },
-          { label: "Developing", score: 12, descriptor: "Some organizational issues but still followable" },
-          { label: "Beginning", score: 6, descriptor: "Disorganized with poor transitions" },
+          {
+            label: "Excellent",
+            score: 25,
+            descriptor: "Ideas are well-organized with seamless transitions",
+          },
+          {
+            label: "Proficient",
+            score: 18,
+            descriptor: "Generally organized with adequate transitions",
+          },
+          {
+            label: "Developing",
+            score: 12,
+            descriptor: "Some organizational issues but still followable",
+          },
+          {
+            label: "Beginning",
+            score: 6,
+            descriptor: "Disorganized with poor transitions",
+          },
         ],
       },
       {
@@ -93,10 +189,26 @@ const INITIAL_RUBRICS = [
         description: "Integration and citation of research sources",
         points: 25,
         levels: [
-          { label: "Excellent", score: 25, descriptor: "Research is well-integrated and properly cited" },
-          { label: "Proficient", score: 18, descriptor: "Research is integrated with mostly proper citations" },
-          { label: "Developing", score: 12, descriptor: "Some research used with citation issues" },
-          { label: "Beginning", score: 6, descriptor: "Minimal research or poor citation practices" },
+          {
+            label: "Excellent",
+            score: 25,
+            descriptor: "Research is well-integrated and properly cited",
+          },
+          {
+            label: "Proficient",
+            score: 18,
+            descriptor: "Research is integrated with mostly proper citations",
+          },
+          {
+            label: "Developing",
+            score: 12,
+            descriptor: "Some research used with citation issues",
+          },
+          {
+            label: "Beginning",
+            score: 6,
+            descriptor: "Minimal research or poor citation practices",
+          },
         ],
       },
       {
@@ -104,10 +216,26 @@ const INITIAL_RUBRICS = [
         description: "Spelling, punctuation, and grammatical accuracy",
         points: 20,
         levels: [
-          { label: "Excellent", score: 20, descriptor: "Virtually no grammatical or mechanical errors" },
-          { label: "Proficient", score: 15, descriptor: "Minor errors that do not impede understanding" },
-          { label: "Developing", score: 10, descriptor: "Several errors that occasionally distract" },
-          { label: "Beginning", score: 5, descriptor: "Frequent errors that impede comprehension" },
+          {
+            label: "Excellent",
+            score: 20,
+            descriptor: "Virtually no grammatical or mechanical errors",
+          },
+          {
+            label: "Proficient",
+            score: 15,
+            descriptor: "Minor errors that do not impede understanding",
+          },
+          {
+            label: "Developing",
+            score: 10,
+            descriptor: "Several errors that occasionally distract",
+          },
+          {
+            label: "Beginning",
+            score: 5,
+            descriptor: "Frequent errors that impede comprehension",
+          },
         ],
       },
     ],
@@ -125,10 +253,26 @@ const INITIAL_RUBRICS = [
         description: "Plot development and narrative engagement",
         points: 30,
         levels: [
-          { label: "Excellent", score: 30, descriptor: "Story is compelling with excellent plot development" },
-          { label: "Proficient", score: 22, descriptor: "Story is interesting with good plot progression" },
-          { label: "Developing", score: 15, descriptor: "Story is present but may lack engagement" },
-          { label: "Beginning", score: 7, descriptor: "Story is confusing or poorly developed" },
+          {
+            label: "Excellent",
+            score: 30,
+            descriptor: "Story is compelling with excellent plot development",
+          },
+          {
+            label: "Proficient",
+            score: 22,
+            descriptor: "Story is interesting with good plot progression",
+          },
+          {
+            label: "Developing",
+            score: 15,
+            descriptor: "Story is present but may lack engagement",
+          },
+          {
+            label: "Beginning",
+            score: 7,
+            descriptor: "Story is confusing or poorly developed",
+          },
         ],
       },
       {
@@ -136,10 +280,26 @@ const INITIAL_RUBRICS = [
         description: "Character development and depth",
         points: 25,
         levels: [
-          { label: "Excellent", score: 25, descriptor: "Characters are vivid and well-developed" },
-          { label: "Proficient", score: 18, descriptor: "Characters are clear with adequate development" },
-          { label: "Developing", score: 12, descriptor: "Characters are present but underdeveloped" },
-          { label: "Beginning", score: 6, descriptor: "Characters are flat or poorly defined" },
+          {
+            label: "Excellent",
+            score: 25,
+            descriptor: "Characters are vivid and well-developed",
+          },
+          {
+            label: "Proficient",
+            score: 18,
+            descriptor: "Characters are clear with adequate development",
+          },
+          {
+            label: "Developing",
+            score: 12,
+            descriptor: "Characters are present but underdeveloped",
+          },
+          {
+            label: "Beginning",
+            score: 6,
+            descriptor: "Characters are flat or poorly defined",
+          },
         ],
       },
       {
@@ -147,10 +307,26 @@ const INITIAL_RUBRICS = [
         description: "Emotional impact and reader connection",
         points: 25,
         levels: [
-          { label: "Excellent", score: 25, descriptor: "Creates strong emotional connection with reader" },
-          { label: "Proficient", score: 18, descriptor: "Creates some emotional engagement" },
-          { label: "Developing", score: 12, descriptor: "Minimal emotional impact or connection" },
-          { label: "Beginning", score: 6, descriptor: "Little to no emotional engagement" },
+          {
+            label: "Excellent",
+            score: 25,
+            descriptor: "Creates strong emotional connection with reader",
+          },
+          {
+            label: "Proficient",
+            score: 18,
+            descriptor: "Creates some emotional engagement",
+          },
+          {
+            label: "Developing",
+            score: 12,
+            descriptor: "Minimal emotional impact or connection",
+          },
+          {
+            label: "Beginning",
+            score: 6,
+            descriptor: "Little to no emotional engagement",
+          },
         ],
       },
       {
@@ -158,10 +334,26 @@ const INITIAL_RUBRICS = [
         description: "Descriptive language and imagery",
         points: 20,
         levels: [
-          { label: "Excellent", score: 20, descriptor: "Rich, vivid language with strong imagery" },
-          { label: "Proficient", score: 15, descriptor: "Good descriptive language with clear imagery" },
-          { label: "Developing", score: 10, descriptor: "Some descriptive language but lacks vividness" },
-          { label: "Beginning", score: 5, descriptor: "Minimal descriptive language or imagery" },
+          {
+            label: "Excellent",
+            score: 20,
+            descriptor: "Rich, vivid language with strong imagery",
+          },
+          {
+            label: "Proficient",
+            score: 15,
+            descriptor: "Good descriptive language with clear imagery",
+          },
+          {
+            label: "Developing",
+            score: 10,
+            descriptor: "Some descriptive language but lacks vividness",
+          },
+          {
+            label: "Beginning",
+            score: 5,
+            descriptor: "Minimal descriptive language or imagery",
+          },
         ],
       },
     ],
@@ -179,10 +371,26 @@ const INITIAL_RUBRICS = [
         description: "Depth and quality of research conducted",
         points: 30,
         levels: [
-          { label: "Excellent", score: 30, descriptor: "Research is thorough, well-sourced, and credible" },
-          { label: "Proficient", score: 22, descriptor: "Research is solid with credible sources" },
-          { label: "Developing", score: 15, descriptor: "Some research present but may lack depth" },
-          { label: "Beginning", score: 7, descriptor: "Minimal or superficial research" },
+          {
+            label: "Excellent",
+            score: 30,
+            descriptor: "Research is thorough, well-sourced, and credible",
+          },
+          {
+            label: "Proficient",
+            score: 22,
+            descriptor: "Research is solid with credible sources",
+          },
+          {
+            label: "Developing",
+            score: 15,
+            descriptor: "Some research present but may lack depth",
+          },
+          {
+            label: "Beginning",
+            score: 7,
+            descriptor: "Minimal or superficial research",
+          },
         ],
       },
       {
@@ -190,10 +398,26 @@ const INITIAL_RUBRICS = [
         description: "Proper citation format and accuracy",
         points: 25,
         levels: [
-          { label: "Excellent", score: 25, descriptor: "All citations are accurate and properly formatted" },
-          { label: "Proficient", score: 18, descriptor: "Most citations are accurate and well-formatted" },
-          { label: "Developing", score: 12, descriptor: "Some citation errors or inconsistencies" },
-          { label: "Beginning", score: 6, descriptor: "Many citation errors or missing citations" },
+          {
+            label: "Excellent",
+            score: 25,
+            descriptor: "All citations are accurate and properly formatted",
+          },
+          {
+            label: "Proficient",
+            score: 18,
+            descriptor: "Most citations are accurate and well-formatted",
+          },
+          {
+            label: "Developing",
+            score: 12,
+            descriptor: "Some citation errors or inconsistencies",
+          },
+          {
+            label: "Beginning",
+            score: 6,
+            descriptor: "Many citation errors or missing citations",
+          },
         ],
       },
       {
@@ -201,10 +425,26 @@ const INITIAL_RUBRICS = [
         description: "Critical analysis and interpretation",
         points: 25,
         levels: [
-          { label: "Excellent", score: 25, descriptor: "Analysis is deep, critical, and insightful" },
-          { label: "Proficient", score: 18, descriptor: "Good analysis with some critical thinking" },
-          { label: "Developing", score: 12, descriptor: "Some analysis but mostly descriptive" },
-          { label: "Beginning", score: 6, descriptor: "Minimal analysis or mostly summary" },
+          {
+            label: "Excellent",
+            score: 25,
+            descriptor: "Analysis is deep, critical, and insightful",
+          },
+          {
+            label: "Proficient",
+            score: 18,
+            descriptor: "Good analysis with some critical thinking",
+          },
+          {
+            label: "Developing",
+            score: 12,
+            descriptor: "Some analysis but mostly descriptive",
+          },
+          {
+            label: "Beginning",
+            score: 6,
+            descriptor: "Minimal analysis or mostly summary",
+          },
         ],
       },
       {
@@ -212,10 +452,26 @@ const INITIAL_RUBRICS = [
         description: "Academic standards and scholarly approach",
         points: 20,
         levels: [
-          { label: "Excellent", score: 20, descriptor: "High academic rigor and scholarly standards" },
-          { label: "Proficient", score: 15, descriptor: "Good academic standards and approach" },
-          { label: "Developing", score: 10, descriptor: "Meets basic academic standards" },
-          { label: "Beginning", score: 5, descriptor: "Does not meet academic standards" },
+          {
+            label: "Excellent",
+            score: 20,
+            descriptor: "High academic rigor and scholarly standards",
+          },
+          {
+            label: "Proficient",
+            score: 15,
+            descriptor: "Good academic standards and approach",
+          },
+          {
+            label: "Developing",
+            score: 10,
+            descriptor: "Meets basic academic standards",
+          },
+          {
+            label: "Beginning",
+            score: 5,
+            descriptor: "Does not meet academic standards",
+          },
         ],
       },
     ],
@@ -252,18 +508,23 @@ const RubricsSection = () => {
     try {
       const response = await fetch("http://localhost:5000/api/rubrics");
       const data = await response.json();
-      
+
       // Merge INITIAL_RUBRICS with fetched custom rubrics
       // Ensure pre-defined rubrics have isCustom: false, and custom ones have isCustom: true
       const mergedRubrics = [
         ...INITIAL_RUBRICS,
-        ...(Array.isArray(data) 
+        ...(Array.isArray(data)
           ? data
-              .filter(r => !INITIAL_RUBRICS.some(initial => initial.id === r.id))
-              .map(r => ({ ...r, isCustom: r.isCustom !== false ? true : false }))
-          : [])
+              .filter(
+                (r) => !INITIAL_RUBRICS.some((initial) => initial.id === r.id),
+              )
+              .map((r) => ({
+                ...r,
+                isCustom: r.isCustom !== false ? true : false,
+              }))
+          : []),
       ];
-      
+
       setRubrics(mergedRubrics);
     } catch (err) {
       console.error("Failed to fetch rubrics:", err);
@@ -279,7 +540,7 @@ const RubricsSection = () => {
   // Save rubric edits to backend
   const handleSave = async (data) => {
     if (!selectedRubric || !selectedRubric.id) return;
-    
+
     // Prevent saving pre-defined rubrics (they are read-only)
     if (!selectedRubric.isCustom) {
       alert("Cannot update pre-defined rubrics. They are read-only.");
@@ -304,7 +565,7 @@ const RubricsSection = () => {
         })),
       })),
     };
-    
+
     console.log("📤 Sending update to backend:", {
       id: selectedRubric.id,
       rubric: updatedRubric,
@@ -319,11 +580,11 @@ const RubricsSection = () => {
           body: JSON.stringify(updatedRubric),
         },
       );
-      
+
       console.log("📥 Response status:", response.status);
       const result = await response.json();
       console.log("📥 Response data:", result);
-      
+
       if (!result.success) {
         alert("Failed to update rubric: " + (result.error || "Unknown error"));
       } else {
@@ -331,19 +592,19 @@ const RubricsSection = () => {
         // Refetch the specific rubric to get the latest data from database
         try {
           const fetchResponse = await fetch(
-            `http://localhost:5000/api/rubrics/${selectedRubric.id}`
+            `http://localhost:5000/api/rubrics/${selectedRubric.id}`,
           );
           const fetchResult = await fetchResponse.json();
           console.log("📥 Refetched rubric:", fetchResult);
-          
+
           if (fetchResult.rubric) {
             // Mark it as custom if it's a user-created rubric
             fetchResult.rubric.isCustom = true;
             // Update the rubric in the list
             setRubrics((prevRubrics) =>
               prevRubrics.map((r) =>
-                r.id === selectedRubric.id ? fetchResult.rubric : r
-              )
+                r.id === selectedRubric.id ? fetchResult.rubric : r,
+              ),
             );
             console.log("✅ Updated rubric in state with fresh database data");
           }
@@ -375,10 +636,26 @@ const RubricsSection = () => {
           description: "Clarity and depth of ideas",
           points: 25,
           levels: [
-            { label: "Excellent", score: 25, descriptor: "Clear, focused, and thoroughly developed" },
-            { label: "Proficient", score: 18, descriptor: "Mostly clear with adequate development" },
-            { label: "Developing", score: 12, descriptor: "Present but lacks depth or focus" },
-            { label: "Beginning", score: 6, descriptor: "Unclear or poorly developed" },
+            {
+              label: "Excellent",
+              score: 25,
+              descriptor: "Clear, focused, and thoroughly developed",
+            },
+            {
+              label: "Proficient",
+              score: 18,
+              descriptor: "Mostly clear with adequate development",
+            },
+            {
+              label: "Developing",
+              score: 12,
+              descriptor: "Present but lacks depth or focus",
+            },
+            {
+              label: "Beginning",
+              score: 6,
+              descriptor: "Unclear or poorly developed",
+            },
           ],
         },
         {
@@ -386,10 +663,26 @@ const RubricsSection = () => {
           description: "Logical flow and structure",
           points: 25,
           levels: [
-            { label: "Excellent", score: 25, descriptor: "Logical and transitions are seamless" },
-            { label: "Proficient", score: 18, descriptor: "Generally organized with adequate transitions" },
-            { label: "Developing", score: 12, descriptor: "Some organization but flow is inconsistent" },
-            { label: "Beginning", score: 6, descriptor: "Little to no organizational structure" },
+            {
+              label: "Excellent",
+              score: 25,
+              descriptor: "Logical and transitions are seamless",
+            },
+            {
+              label: "Proficient",
+              score: 18,
+              descriptor: "Generally organized with adequate transitions",
+            },
+            {
+              label: "Developing",
+              score: 12,
+              descriptor: "Some organization but flow is inconsistent",
+            },
+            {
+              label: "Beginning",
+              score: 6,
+              descriptor: "Little to no organizational structure",
+            },
           ],
         },
         {
@@ -397,10 +690,26 @@ const RubricsSection = () => {
           description: "Vocabulary and sentence variety",
           points: 25,
           levels: [
-            { label: "Excellent", score: 25, descriptor: "Rich vocabulary and varied sentence structures" },
-            { label: "Proficient", score: 18, descriptor: "Adequate vocabulary with some variety" },
-            { label: "Developing", score: 12, descriptor: "Limited vocabulary and repetitive structures" },
-            { label: "Beginning", score: 6, descriptor: "Very limited language control" },
+            {
+              label: "Excellent",
+              score: 25,
+              descriptor: "Rich vocabulary and varied sentence structures",
+            },
+            {
+              label: "Proficient",
+              score: 18,
+              descriptor: "Adequate vocabulary with some variety",
+            },
+            {
+              label: "Developing",
+              score: 12,
+              descriptor: "Limited vocabulary and repetitive structures",
+            },
+            {
+              label: "Beginning",
+              score: 6,
+              descriptor: "Very limited language control",
+            },
           ],
         },
         {
@@ -408,10 +717,26 @@ const RubricsSection = () => {
           description: "Spelling, punctuation, and accuracy",
           points: 25,
           levels: [
-            { label: "Excellent", score: 25, descriptor: "Virtually no grammatical or mechanical errors" },
-            { label: "Proficient", score: 18, descriptor: "Minor errors that do not impede understanding" },
-            { label: "Developing", score: 12, descriptor: "Several errors that occasionally distract" },
-            { label: "Beginning", score: 6, descriptor: "Frequent errors that impede comprehension" },
+            {
+              label: "Excellent",
+              score: 25,
+              descriptor: "Virtually no grammatical or mechanical errors",
+            },
+            {
+              label: "Proficient",
+              score: 18,
+              descriptor: "Minor errors that do not impede understanding",
+            },
+            {
+              label: "Developing",
+              score: 12,
+              descriptor: "Several errors that occasionally distract",
+            },
+            {
+              label: "Beginning",
+              score: 6,
+              descriptor: "Frequent errors that impede comprehension",
+            },
           ],
         },
       ],
@@ -461,7 +786,7 @@ const RubricsSection = () => {
         {
           method: "DELETE",
           headers: { "Content-Type": "application/json" },
-        }
+        },
       );
 
       const result = await response.json();
@@ -470,7 +795,7 @@ const RubricsSection = () => {
       if (result.success) {
         // Remove from local state
         setRubrics((prev) => prev.filter((r) => r.id !== rubricToDelete.id));
-        
+
         // Show success message
         setDeleteSuccess(true);
         setShowDeleteConfirmModal(false);
@@ -557,13 +882,15 @@ const RubricsSection = () => {
               <div className="rubric-total-badge">Total: {total} pts</div>
 
               <span className="rubric-edit-hint">
-                {rubric.isCustom ? "Click to edit criteria →" : "View criteria (Read-Only) →"}
+                {rubric.isCustom
+                  ? "Click to edit criteria →"
+                  : "View criteria (Read-Only) →"}
               </span>
             </div>
           );
         })}
 
-        {/* Add Essay Type card — laging nasa dulo */}
+        {/* Add Essay Type card — laging nasa dulo 
         <div
           className="rubric-item rubric-add-card"
           onClick={() => setShowAddModal(true)}
@@ -574,7 +901,7 @@ const RubricsSection = () => {
           <span className="rubric-add-icon">＋</span>
           <h3>Add Essay Type</h3>
           <p>Create a custom rubric for a new essay type</p>
-        </div>
+        </div> */}
       </div>
 
       {/* Modal para mag-add ng bagong essay type */}
@@ -640,15 +967,13 @@ const RubricsSection = () => {
           <div className="modal-box" onClick={(e) => e.stopPropagation()}>
             <h3 className="modal-title">Delete Rubric</h3>
             <p className="modal-delete-message">
-              Are you sure you want to delete "<strong>{rubricToDelete.title}</strong>"? 
-              This action cannot be undone.
+              Are you sure you want to delete "
+              <strong>{rubricToDelete.title}</strong>"? This action cannot be
+              undone.
             </p>
 
             <div className="modal-footer">
-              <button
-                className="modal-cancel-btn"
-                onClick={handleCancelDelete}
-              >
+              <button className="modal-cancel-btn" onClick={handleCancelDelete}>
                 Cancel
               </button>
               <button

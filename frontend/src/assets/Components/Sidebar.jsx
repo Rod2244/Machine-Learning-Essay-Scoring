@@ -1,19 +1,20 @@
-import React from 'react';
-import '../css/Sidebar.css';
+import React from "react";
+import "../css/Sidebar.css";
 
 const Sidebar = ({ activeTab, setActiveTab }) => {
   const tabs = [
-    { name: 'Essays', icon: '📝' },
-    { name: 'Rubrics', icon: '📋' },
-    { name: 'History', icon: '🕒' }
+    { name: "Essays", icon: "📝" },
+    { name: "Rubrics", icon: "📋" },
+    { name: "History", icon: "🕒" },
   ];
 
   return (
     <div className="sidebar">
-      {tabs.map((tab) => (
-        <div 
+      {tabs.map((tab, idx) => (
+        <div
           key={tab.name}
-          className={`sidebar-item ${activeTab === tab.name ? 'active' : ''}`}
+          data-tab={idx + 1}
+          className={`sidebar-item ${activeTab === tab.name ? "active" : ""}`}
           onClick={() => setActiveTab(tab.name)}
         >
           <span className="icon">{tab.icon}</span>

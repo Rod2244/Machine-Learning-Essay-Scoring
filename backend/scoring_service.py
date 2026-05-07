@@ -42,48 +42,56 @@ class EssayScoringService:
             return {"success": False, "error": "Empty essay text"}
         
         try:
-            # Get ML model prediction
+            # Get per-trait ML predictions
             prediction = self.scorer.predict(essay_text)
-            base_score = prediction['score']
             confidence = prediction['confidence']
-            
-            # Apply quality checks and penalties
+
+            # Apply quality penalties — convert to a 0.0–1.0 multiplicative factor
             quality_penalty = self._calculate_quality_penalties(essay_text)
-            base_score = max(0, base_score - quality_penalty)
-            
-            print(f"[ScoringService] Base ML score: {prediction['score']}")
-            print(f"[ScoringService] Quality penalty: {quality_penalty}")
-            print(f"[ScoringService] Score after quality check: {base_score}")
-            
+            quality_factor = max(0.0, 1.0 - quality_penalty / 100.0)
+
+            # Get rubric-specific weights (used for logging only now)
+            weights = self._get_rubric_weights(rubric_id)
+
+            raw_trait_scores = {
+                'content':      prediction.get('score_content',      prediction.get('score', 50)),
+                'organization': prediction.get('score_organization', prediction.get('score', 50)),
+                'voice':        prediction.get('score_voice',        prediction.get('score', 50)),
+                'conventions':  prediction.get('score_conventions',  prediction.get('score', 50)),
+            }
+
+            overall_score = sum(raw_trait_scores[t] * w for t, w in weights.items())
+
+            print(f"[ScoringService] Trait scores: {raw_trait_scores}")
+            print(f"[ScoringService] Rubric weights (id={rubric_id}): {weights}")
+            print(f"[ScoringService] Weighted score: {overall_score:.1f}, quality_factor: {quality_factor:.2f}")
+
             # Calculate topic relevance (if prompt provided)
             topic_relevance = self.calculate_topic_relevance(essay_text, prompt)
-            
-            # Adjust score based on topic relevance
-            score = base_score
-            if topic_relevance < 30:  # Very off-topic
-                score = max(0, score - 30)  # Penalize significantly
-            elif topic_relevance < 60:  # Somewhat off-topic
-                score = max(0, score - 15)  # Moderate penalty
-            # On-topic essays keep their score
-            
-            # Ensure score is in valid range
-            score = max(0, min(100, score))
-            
-            # Calculate breakdown based on score (deterministic, no randomness)
-            breakdown = self._calculate_breakdown(score, rubric_id)
 
-            # DEBUG: log rubric_id and breakdown for troubleshooting custom rubrics
-            try:
-                print(f"[ScoringService] ===== SCORING COMPLETE =====")
-                print(f"[ScoringService] rubric_id passed: {repr(rubric_id)} (type: {type(rubric_id).__name__})")
-                print(f"[ScoringService] ML score: {score}")
-                print(f"[ScoringService] breakdown computed: {breakdown}")
-                print(f"[ScoringService] ===== END SCORING =====")
-            except Exception:
-                pass
+            # Convert topic relevance to a multiplicative factor
+            if topic_relevance < 30:
+                relevance_factor = 0.70
+            elif topic_relevance < 60:
+                relevance_factor = 0.85
+            else:
+                relevance_factor = 1.0
+
+            # Single combined factor applied to all breakdown scores
+            combined_factor = quality_factor * relevance_factor
+
+            # Build breakdown — combined_factor scales all trait scores uniformly
+            breakdown = self._build_breakdown_from_traits(prediction, rubric_id, combined_factor)
+
+            # Total score = sum of breakdown (always consistent with what is displayed)
+            score = max(0, min(100, sum(breakdown.values())))
+
+            print(f"[ScoringService] rubric_id: {repr(rubric_id)}")
+            print(f"[ScoringService] combined_factor: {combined_factor:.2f}  final score: {score}")
+            print(f"[ScoringService] breakdown: {breakdown}")
             
-            # Generate feedback based on rubric breakdown
-            feedback = self._generate_feedback(score, breakdown)
+            # Generate feedback based on rubric breakdown and per-trait scores
+            feedback = self._generate_feedback(score, breakdown, prediction, rubric_id)
             
             result = {
                 "success": True,
@@ -127,161 +135,247 @@ class EssayScoringService:
             traceback.print_exc()
             return {"success": False, "error": f"Scoring failed: {str(e)}"}
     
-    def _calculate_breakdown(self, score, rubric_id):
+    # Rubric-specific trait weights (must sum to 1.0)
+    # These define what each essay TYPE values most — changing rubric changes the score
+    _RUBRIC_TRAIT_WEIGHTS = {
+        1: {'content': 0.40, 'organization': 0.25, 'voice': 0.15, 'conventions': 0.20},  # Argumentative
+        2: {'content': 0.35, 'organization': 0.30, 'voice': 0.15, 'conventions': 0.20},  # Expository
+        3: {'content': 0.25, 'organization': 0.20, 'voice': 0.40, 'conventions': 0.15},  # Narrative
+        4: {'content': 0.40, 'organization': 0.30, 'voice': 0.10, 'conventions': 0.20},  # Research Paper
+    }
+    # Title keyword → weights (for UUID-based Supabase rubrics)
+    _RUBRIC_TITLE_WEIGHTS = {
+        'argumentative': {'content': 0.40, 'organization': 0.25, 'voice': 0.15, 'conventions': 0.20},
+        'expository':    {'content': 0.35, 'organization': 0.30, 'voice': 0.15, 'conventions': 0.20},
+        'narrative':     {'content': 0.25, 'organization': 0.20, 'voice': 0.40, 'conventions': 0.15},
+        'research':      {'content': 0.40, 'organization': 0.30, 'voice': 0.10, 'conventions': 0.20},
+        'descriptive':   {'content': 0.30, 'organization': 0.25, 'voice': 0.30, 'conventions': 0.15},
+        'persuasive':    {'content': 0.40, 'organization': 0.25, 'voice': 0.20, 'conventions': 0.15},
+    }
+    # Default weights for custom rubrics (balanced)
+    _DEFAULT_TRAIT_WEIGHTS = {'content': 0.30, 'organization': 0.25, 'voice': 0.25, 'conventions': 0.20}
+
+    def _get_rubric_weights(self, rubric_id):
         """
-        Calculate score breakdown based on rubric scoring levels
-        Maps 0-100 ML score to appropriate rubric level (Beginning/Developing/Proficient/Excellent)
-        for each criterion and returns actual points from the rubric definition
-        
-        Score Range to Level Mapping:
-        - 0-25:   Beginning (worst performance)
-        - 26-50:  Developing (below average)
-        - 51-75:  Proficient (average to good)
-        - 76-100: Excellent (best performance)
+        Resolve trait weights for a rubric_id that may be an integer (1-4)
+        or a UUID string from Supabase. Falls back to title-keyword matching.
+        """
+        # Integer ID (default rubrics 1-4)
+        if str(rubric_id).isdigit():
+            return self._RUBRIC_TRAIT_WEIGHTS.get(int(rubric_id), self._DEFAULT_TRAIT_WEIGHTS)
+
+        # UUID — look up the rubric title in Supabase and match by keyword
+        try:
+            from supabase_client import supabase_service
+            if supabase_service and getattr(supabase_service, 'admin_client', None):
+                q = supabase_service.admin_client.table('rubrics') \
+                    .select('title').eq('id', str(rubric_id)).execute()
+                if getattr(q, 'data', None) and len(q.data) > 0:
+                    title = q.data[0].get('title', '').lower()
+                    for keyword, weights in self._RUBRIC_TITLE_WEIGHTS.items():
+                        if keyword in title:
+                            print(f"[ScoringService] Rubric '{title}' matched keyword '{keyword}'")
+                            return weights
+                    print(f"[ScoringService] Rubric '{title}' — no keyword match, using default weights")
+        except Exception as e:
+            print(f"[ScoringService] Could not resolve rubric weights: {e}")
+
+        return self._DEFAULT_TRAIT_WEIGHTS
+
+    # Keyword → trait mapping used to match rubric criterion names to ML trait scores
+    _CRITERION_TRAIT_MAP = {
+        # content
+        'content': 'content', 'ideas': 'content', 'thesis': 'content',
+        'argument': 'content', 'evidence': 'content', 'analysis': 'content',
+        'research': 'content', 'clarity': 'content', 'depth': 'content',
+        'vocabulary': 'content', 'storytelling': 'content', 'characters': 'content',
+        'engagement': 'content',
+        # organization
+        'organization': 'organization', 'structure': 'organization',
+        'flow': 'organization', 'coherence': 'organization', 'citations': 'organization',
+        'sequence': 'organization', 'paragraph': 'organization',
+        # voice
+        'voice': 'voice', 'style': 'voice', 'language': 'voice',
+        'tone': 'voice', 'expression': 'voice', 'academic': 'voice',
+        'rigor': 'voice', 'syntax': 'voice', 'phraseology': 'voice',
+        # conventions
+        'grammar': 'conventions', 'conventions': 'conventions',
+        'spelling': 'conventions', 'punctuation': 'conventions', 'mechanics': 'conventions',
+    }
+
+    # Ordered fallback trait assignment for rubric criteria (by position)
+    _POSITION_TRAIT_ORDER = ['content', 'organization', 'voice', 'conventions']
+
+    def _criterion_to_trait(self, criterion_name, position=0):
+        """Map a rubric criterion name to one of the 4 ML trait scores."""
+        name_lower = criterion_name.lower()
+        for keyword, trait in self._CRITERION_TRAIT_MAP.items():
+            if keyword in name_lower:
+                return trait
+        # Positional fallback
+        return self._POSITION_TRAIT_ORDER[position % 4]
+
+    def _build_breakdown_from_traits(self, prediction, rubric_id, relevance_factor=1.0):
+        """
+        Build the rubric breakdown using real per-trait ML scores.
+
+        For each rubric criterion, the ML score for the best-matching trait
+        is scaled by the criterion's max points and the topic-relevance factor.
+
+        Supports:
+          - Custom rubrics from Supabase (with 'levels' or flat 'points')
+          - 4 default built-in rubrics
         """
         breakdown = {}
-        
+
+        # Per-trait scores (0-100) from the multi-trait model
+        trait_scores = {
+            'content':      prediction.get('score_content',      prediction.get('score', 50)),
+            'organization': prediction.get('score_organization', prediction.get('score', 50)),
+            'voice':        prediction.get('score_voice',        prediction.get('score', 50)),
+            'conventions':  prediction.get('score_conventions',  prediction.get('score', 50)),
+        }
+        # Apply relevance penalty
+        trait_scores = {t: max(0.0, min(100.0, v * relevance_factor)) for t, v in trait_scores.items()}
+
+        def trait_score_to_points(trait, max_points):
+            """Convert 0-100 trait score to actual rubric points."""
+            return max(0, int(round(trait_scores[trait] / 100.0 * max_points)))
+
         try:
-            # Map score to performance level
-            def get_performance_level(score):
-                if score <= 25:
-                    return "Beginning"
-                elif score <= 50:
-                    return "Developing"
-                elif score <= 75:
-                    return "Proficient"
-                else:
-                    return "Excellent"
-            
-            performance_level = get_performance_level(score)
-            print(f"[ScoringService] ML Score: {score} → Performance Level: {performance_level}")
-            print(f"[ScoringService] Looking for rubric_id: {repr(rubric_id)} (type: {type(rubric_id).__name__})")
-            
-            # Try to get rubric with levels from Supabase (user-created rubrics)
+            # ── Try custom rubric from Supabase ───────────────────────────────
             criteria_with_levels = None
             try:
                 from supabase_client import supabase_service
                 if supabase_service and getattr(supabase_service, 'admin_client', None):
-                    # Use admin client to bypass RLS
                     rubric_id_str = str(rubric_id)
-                    print(f"[ScoringService] Querying Supabase for rubric_id: {repr(rubric_id_str)}")
-                    q = supabase_service.admin_client.table('rubrics').select('id, title, criteria').eq('id', rubric_id_str).execute()
-                    print(f"[ScoringService] Supabase query result: {q.data if hasattr(q, 'data') else 'NO DATA ATTR'}")
+                    q = supabase_service.admin_client.table('rubrics') \
+                        .select('id, title, criteria').eq('id', rubric_id_str).execute()
                     if getattr(q, 'data', None) and len(q.data) > 0:
-                        print(f"[ScoringService] ✅ Found rubric in Supabase! Title: {q.data[0].get('title', 'Unknown')}")
                         db_criteria = q.data[0].get('criteria', [])
-                        if db_criteria and len(db_criteria) > 0 and 'levels' in db_criteria[0]:
+                        if db_criteria:
                             criteria_with_levels = db_criteria
-                            print(f"[ScoringService] ✅ Found {len(db_criteria)} criteria with levels")
-                        else:
-                            print(f"[ScoringService] ⚠️ Criteria found but no levels in first criterion")
-                    else:
-                        print(f"[ScoringService] ⚠️ No rubric found in Supabase for ID: {rubric_id_str}")
+                            print(f"[ScoringService] Using Supabase rubric: {q.data[0].get('title')}")
             except Exception as e:
-                print(f"[ScoringService] ❌ Error fetching from Supabase: {e}")
-                import traceback
-                traceback.print_exc()
-            
-            # If we have criteria with levels, use them
+                print(f"[ScoringService] Supabase lookup failed: {e}")
+
             if criteria_with_levels:
-                for criterion in criteria_with_levels:
-                    criterion_name = criterion.get('name', 'Unknown')
-                    levels = criterion.get('levels', [])
-                    
-                    if not levels:
-                        # Fallback if no levels defined
-                        criterion_points = criterion.get('points', 0)
-                        criterion_score = int((score * criterion_points) / 100)
-                        breakdown[criterion_name] = max(0, min(criterion_points, criterion_score))
-                        continue
-                    
-                    # Find the level that matches our performance level
-                    selected_level = None
-                    for level in levels:
-                        if level.get('label', '').strip() == performance_level:
-                            selected_level = level
-                            break
-                    
-                    if selected_level:
-                        # Use the actual points from the rubric level
-                        criterion_score = selected_level.get('score', 0)
-                        print(f"[ScoringService] {criterion_name}: {performance_level} → {criterion_score} points")
-                    else:
-                        # Fallback: use proportional if level not found
-                        criterion_points = criterion.get('points', 0)
-                        criterion_score = int((score * criterion_points) / 100)
-                        print(f"[ScoringService] {criterion_name}: Level not found, using proportional → {criterion_score} points")
-                    
-                    breakdown[criterion_name] = max(0, criterion_score)
+                for i, criterion in enumerate(criteria_with_levels):
+                    name       = criterion.get('name', f'Criterion {i+1}')
+                    max_pts    = criterion.get('points', 25)
+                    trait      = self._criterion_to_trait(name, i)
+                    score_pts  = trait_score_to_points(trait, max_pts)
+                    breakdown[name] = score_pts
+                    print(f"[ScoringService] {name} → trait={trait}, {trait_scores[trait]:.1f}/100 → {score_pts}/{max_pts} pts")
+
             else:
-                # Fallback: use default rubrics if no custom rubric found
-                print(f"[ScoringService] No custom rubric found, using default rubric for ID: {rubric_id}")
-                
-                # Default rubric definitions with levels
+                # ── Default built-in rubrics ──────────────────────────────────
+                # Maps criterion name → (max_points, trait)
                 default_rubrics = {
-                    1: {  # Argumentative Essay
-                        'Thesis': {'Beginning': 5, 'Developing': 12, 'Proficient': 18, 'Excellent': 25},
-                        'Evidence': {'Beginning': 5, 'Developing': 12, 'Proficient': 18, 'Excellent': 25},
-                        'Structure': {'Beginning': 6, 'Developing': 15, 'Proficient': 23, 'Excellent': 30},
-                        'Grammar': {'Beginning': 4, 'Developing': 10, 'Proficient': 15, 'Excellent': 20}
-                    },
-                    2: {  # Expository Essay
-                        'Clarity': {'Beginning': 6, 'Developing': 15, 'Proficient': 22, 'Excellent': 30},
-                        'Organization': {'Beginning': 5, 'Developing': 12, 'Proficient': 18, 'Excellent': 25},
-                        'Research': {'Beginning': 5, 'Developing': 12, 'Proficient': 18, 'Excellent': 25},
-                        'Grammar': {'Beginning': 4, 'Developing': 10, 'Proficient': 15, 'Excellent': 20}
-                    },
-                    3: {  # Narrative Essay
-                        'Storytelling': {'Beginning': 6, 'Developing': 15, 'Proficient': 22, 'Excellent': 30},
-                        'Characters': {'Beginning': 5, 'Developing': 12, 'Proficient': 18, 'Excellent': 25},
-                        'Engagement': {'Beginning': 5, 'Developing': 12, 'Proficient': 18, 'Excellent': 25},
-                        'Language': {'Beginning': 4, 'Developing': 10, 'Proficient': 15, 'Excellent': 20}
-                    },
-                    4: {  # Research Paper
-                        'Research': {'Beginning': 6, 'Developing': 15, 'Proficient': 22, 'Excellent': 30},
-                        'Citations': {'Beginning': 5, 'Developing': 12, 'Proficient': 18, 'Excellent': 25},
-                        'Analysis': {'Beginning': 5, 'Developing': 12, 'Proficient': 18, 'Excellent': 25},
-                        'Academic Rigor': {'Beginning': 4, 'Developing': 10, 'Proficient': 15, 'Excellent': 20}
-                    }
+                    1: [  # Argumentative
+                        ('Thesis',    25, 'content'),
+                        ('Evidence',  25, 'content'),
+                        ('Structure', 30, 'organization'),
+                        ('Grammar',   20, 'conventions'),
+                    ],
+                    2: [  # Expository
+                        ('Clarity',       30, 'content'),
+                        ('Organization',  25, 'organization'),
+                        ('Research',      25, 'content'),
+                        ('Grammar',       20, 'conventions'),
+                    ],
+                    3: [  # Narrative
+                        ('Storytelling', 30, 'content'),
+                        ('Characters',   25, 'content'),
+                        ('Engagement',   25, 'voice'),
+                        ('Language',     20, 'voice'),
+                    ],
+                    4: [  # Research Paper
+                        ('Research',  30, 'content'),
+                        ('Citations', 25, 'organization'),
+                        ('Analysis',  25, 'content'),
+                        ('Rigor',     20, 'voice'),
+                    ],
                 }
-                
-                # Get the appropriate default rubric (convert rubric_id to int)
-                rubric_key = int(rubric_id) if isinstance(rubric_id, (int, str)) and str(rubric_id).isdigit() else 1
+
+                rubric_key = int(rubric_id) if str(rubric_id).isdigit() else 1
                 rubric_template = default_rubrics.get(rubric_key, default_rubrics[1])
-                
-                # Apply the performance level to all criteria
-                for criterion_name, levels_dict in rubric_template.items():
-                    criterion_score = levels_dict.get(performance_level, levels_dict.get('Proficient', 0))
-                    breakdown[criterion_name] = criterion_score
-                    print(f"[ScoringService] {criterion_name}: {performance_level} → {criterion_score} points")
-        
+
+                for name, max_pts, trait in rubric_template:
+                    score_pts = trait_score_to_points(trait, max_pts)
+                    breakdown[name] = score_pts
+                    print(f"[ScoringService] {name} → trait={trait}, {trait_scores[trait]:.1f}/100 → {score_pts}/{max_pts} pts")
+
         except Exception as e:
-            print(f"[ScoringService] Error in _calculate_breakdown: {e}")
+            print(f"[ScoringService] Error building breakdown: {e}")
             import traceback
             traceback.print_exc()
-            # Fallback to default
-            breakdown = {
-                "Thesis": 18,
-                "Evidence": 18,
-                "Structure": 23,
-                "Grammar": 15
-            }
-        
+            breakdown = {'Content': 18, 'Organization': 18, 'Voice': 14, 'Conventions': 14}
+
         print(f"[ScoringService] Final breakdown: {breakdown}")
         return breakdown
     
-    def _generate_feedback(self, score, breakdown=None):
+    # Trait-specific improvement tips
+    _TRAIT_TIPS = {
+        'content': [
+            "Develop your main argument with more specific evidence and examples.",
+            "Ensure every paragraph directly supports your central thesis.",
+            "Add data, quotes, or real-world examples to strengthen your ideas.",
+        ],
+        'organization': [
+            "Use transition words (however, furthermore, in conclusion) to connect ideas.",
+            "Make sure your essay has a clear introduction, body paragraphs, and conclusion.",
+            "Each paragraph should focus on one main idea with a clear topic sentence.",
+        ],
+        'voice': [
+            "Vary your sentence lengths to create a more engaging rhythm.",
+            "Use more precise and sophisticated vocabulary to strengthen your voice.",
+            "Adjust your tone to suit your audience — formal for academic, expressive for narrative.",
+        ],
+        'conventions': [
+            "Proofread for grammar errors, especially subject-verb agreement.",
+            "Check punctuation at the end of every sentence.",
+            "Avoid repetitive word choices — use a thesaurus to diversify your language.",
+        ],
+    }
+
+    def _generate_feedback(self, score, breakdown=None, prediction=None, rubric_id=1):
         """
-        Generate detailed feedback based on score and rubric breakdown
-        
+        Generate detailed, trait-specific feedback tailored to the rubric type.
+
         Args:
-            score: Overall score (0-100)
-            breakdown: Dictionary of criterion -> points breakdown
-            
-        Returns:
-            Detailed feedback that references specific rubric criteria
+            score:      Overall score (0-100)
+            breakdown:  Dict of criterion -> points
+            prediction: Raw per-trait prediction dict from EssayScorer.predict()
+            rubric_id:  Active rubric ID (affects which traits to emphasise in feedback)
         """
-        # Determine overall performance level
+        weights = self._get_rubric_weights(rubric_id)
+
+        # Find the top-weighted trait for this rubric (what the rubric cares about most)
+        primary_trait = max(weights, key=weights.get)
+        trait_label_map = {
+            'content': 'Content & Ideas',
+            'organization': 'Organization',
+            'voice': 'Voice & Style',
+            'conventions': 'Conventions',
+        }
+        rubric_names = {1: 'Argumentative', 2: 'Expository', 3: 'Narrative', 4: 'Research Paper'}
+        rubric_key = int(rubric_id) if str(rubric_id).isdigit() else 0
+        if rubric_key in rubric_names:
+            rubric_name = rubric_names[rubric_key]
+        else:
+            # Try to get title from Supabase for UUID rubrics
+            rubric_name = 'Essay'
+            try:
+                from supabase_client import supabase_service
+                if supabase_service and getattr(supabase_service, 'admin_client', None):
+                    q = supabase_service.admin_client.table('rubrics') \
+                        .select('title').eq('id', str(rubric_id)).execute()
+                    if getattr(q, 'data', None) and len(q.data) > 0:
+                        rubric_name = q.data[0].get('title', 'Essay')
+            except Exception:
+                pass
+
         if score >= 90:
             overall_level = "Excellent"
         elif score >= 80:
@@ -296,55 +390,68 @@ class EssayScoringService:
             overall_level = "Needs Improvement"
         else:
             overall_level = "Requires Revision"
-        
-        # If we have breakdown data, create detailed feedback
-        if breakdown and isinstance(breakdown, dict):
+
+        parts = [f"Overall: {overall_level} ({round(score)}/100)."]
+
+        # Trait-level analysis from ML prediction
+        if prediction and isinstance(prediction, dict):
             try:
-                # Find strengths (highest scoring criteria)
-                sorted_criteria = sorted(breakdown.items(), key=lambda x: x[1], reverse=True)
-                
-                # Identify weak and strong areas
-                strongest = sorted_criteria[0] if sorted_criteria else None
-                weakest = sorted_criteria[-1] if sorted_criteria else None
-                
-                # Build feedback mentioning specific criteria
-                feedback_parts = [f"Overall: {overall_level} essay (Score: {score}/100)."]
-                
-                if strongest:
-                    feedback_parts.append(f"Strongest area: {strongest[0]} ({strongest[1]} points).")
-                
-                if weakest and len(sorted_criteria) > 1:
-                    # Only mention weakest if it's significantly lower than strongest
-                    if strongest[1] - weakest[1] > 3:
-                        feedback_parts.append(f"Needs improvement: {weakest[0]} ({weakest[1]} points).")
-                
-                # Add actionable suggestions based on score
-                if score >= 80:
-                    feedback_parts.append("Maintain this level of quality.")
-                elif score >= 60:
-                    feedback_parts.append("Focus on improving the weaker criteria to raise your score.")
-                else:
-                    feedback_parts.append("Significant improvement needed across multiple criteria.")
-                
-                return " ".join(feedback_parts)
+                trait_scores = {
+                    'Content & Ideas':  prediction.get('score_content',      score),
+                    'Organization':     prediction.get('score_organization', score),
+                    'Voice & Style':    prediction.get('score_voice',        score),
+                    'Conventions':      prediction.get('score_conventions',  score),
+                }
+                trait_key_map = {
+                    'Content & Ideas': 'content',
+                    'Organization':    'organization',
+                    'Voice & Style':   'voice',
+                    'Conventions':     'conventions',
+                }
+
+                # Highlight primary trait performance for this rubric
+                primary_label = trait_label_map[primary_trait]
+                primary_score = trait_scores.get(primary_label, score)
+                _article = 'an' if rubric_name and rubric_name[0].lower() in 'aeiou' else 'a'
+                parts.append(
+                    f"For {_article} {rubric_name}, {primary_label} is most important "
+                    f"({int(weights[primary_trait]*100)}% weight): {primary_score:.0f}/100."
+                )
+
+                sorted_traits = sorted(trait_scores.items(), key=lambda x: x[1], reverse=True)
+                strongest_label, strongest_val = sorted_traits[0]
+                weakest_label,   weakest_val   = sorted_traits[-1]
+
+                if strongest_val - weakest_val > 8:
+                    parts.append(f"Weakest area: {weakest_label} ({weakest_val:.0f}/100).")
+                    tip_key = trait_key_map.get(weakest_label, 'content')
+                    tip = self._TRAIT_TIPS[tip_key][0]
+                    parts.append(f"Tip: {tip}")
+
+                if score < 60:
+                    for label, val in sorted_traits[-2:]:
+                        if val < 60:
+                            tip_key = trait_key_map.get(label, 'content')
+                            parts.append(f"{label}: {self._TRAIT_TIPS[tip_key][1]}")
             except Exception as e:
-                print(f"Error generating detailed feedback: {e}")
-        
-        # Fallback to simple feedback if breakdown unavailable
-        if score >= 90:
-            return "Excellent essay with outstanding organization, depth, and clarity."
-        elif score >= 80:
-            return "Very good essay with strong content and clear structure."
-        elif score >= 70:
-            return "Good essay with solid organization and comprehensive content."
+                print(f"Error generating trait feedback: {e}")
+
+        elif breakdown and isinstance(breakdown, dict):
+            # Fallback: use breakdown points if no prediction dict
+            sorted_criteria = sorted(breakdown.items(), key=lambda x: x[1], reverse=True)
+            if sorted_criteria:
+                parts.append(f"Strongest area: {sorted_criteria[0][0]} ({sorted_criteria[0][1]} pts).")
+            if len(sorted_criteria) > 1 and sorted_criteria[0][1] - sorted_criteria[-1][1] > 3:
+                parts.append(f"Needs improvement: {sorted_criteria[-1][0]} ({sorted_criteria[-1][1]} pts).")
+
+        if score >= 80:
+            parts.append("Keep up this level of quality.")
         elif score >= 60:
-            return "Satisfactory essay with adequate structure and content."
-        elif score >= 50:
-            return "Fair essay with some good elements but needs improvement."
-        elif score >= 40:
-            return "Essay needs significant improvement in organization and content."
+            parts.append("Focus on improving the weaker areas to raise your score.")
         else:
-            return "Essay requires major revisions to meet standards."
+            parts.append("Significant improvement is needed across multiple areas.")
+
+        return " ".join(parts)
     
     def _get_essay_type_by_rubric_id(self, rubric_id):
         """Get essay type name by rubric ID"""

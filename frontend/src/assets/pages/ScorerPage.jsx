@@ -30,7 +30,7 @@ const ScorerPage = () => {
       setEssayPrompt(savedPrompt);
       console.log("✓ Loaded saved essay prompt from storage");
     }
-    
+
     console.log("📖 ScorerPage mounted - checking localStorage:");
     console.log("   user_id:", localStorage.getItem("user_id"));
     console.log("   user_full_name:", localStorage.getItem("user_full_name"));
@@ -290,7 +290,8 @@ const ScorerPage = () => {
                     type="text"
                     className="essay-prompt-input"
                     placeholder="Enter the essay question here..."
-                    value={essayPrompt} onClick={handleSavePrompt}
+                    value={essayPrompt}
+                    onClick={handleSavePrompt}
                     onChange={(e) => setEssayPrompt(e.target.value)}
                   />
                   {essayPrompt && (
@@ -309,7 +310,12 @@ const ScorerPage = () => {
 
             {/* Student Name Section */}
             <div className="input-section">
-              <div className="section-label">Student Name <span style={{fontSize: '0.85em', color: '#999'}}>(Optional)</span></div>
+              <div className="section-label">
+                Student Name{" "}
+                <span style={{ fontSize: "0.85em", color: "#999" }}>
+                  (Optional)
+                </span>
+              </div>
               <div className="input-row">
                 <div className="input-wrapper">
                   <input
@@ -539,7 +545,12 @@ const ScorerPage = () => {
                           <span className="score-value">{score}</span>
                           <span className="score-max">/{criterion.points}</span>
                         </div>
-                        <div className="progress-bar" style={{ backgroundColor: progressStatus.backgroundColor }}>
+                        <div
+                          className="progress-bar"
+                          style={{
+                            backgroundColor: progressStatus.backgroundColor,
+                          }}
+                        >
                           <div
                             className="progress-fill"
                             style={{
@@ -577,19 +588,19 @@ const ScorerPage = () => {
                 <div className="confidence-meter">
                   <p className="confidence-label">
                     AI Confidence:{" "}
-                    {((scoringResult.data?.confidence || 0) * 100).toFixed(1)}%
+                    {((scoringResult.confidence || 0) * 100).toFixed(1)}%
                   </p>
                   <div className="confidence-bar">
                     <div
                       className="confidence-fill"
                       style={{
-                        width: `${(scoringResult.data?.confidence || 0) * 100}%`,
+                        width: `${(scoringResult.confidence || 0) * 100}%`,
                       }}
                     />
                   </div>
                 </div>
                 <p className="overall-feedback">
-                  {scoringResult.data?.feedback || ""}
+                  {scoringResult.feedback || ""}
                 </p>
               </div>
             </>
